@@ -5,25 +5,6 @@
       <view class="back-arrow" />
     </view>
 
-    <!-- 背景光斑 -->
-    <view class="orb orb-1" />
-    <view class="orb orb-2" />
-    <view class="orb orb-3" />
-    <!-- 星星点缀 -->
-    <view
-      v-for="(s, i) in stars"
-      :key="i"
-      class="star"
-      :style="{
-        top: s.top,
-        left: s.left,
-        width: s.size + 'px',
-        height: s.size + 'px',
-        animationDelay: s.delay + 's',
-        animationDuration: s.duration + 's'
-      }"
-    />
-
     <view class="content">
       <!-- 默认头像 -->
       <view class="logo-wrap">
@@ -39,122 +20,15 @@
       <!-- 表单卡片 -->
       <view class="card">
         <!-- 用户名 -->
-        <view class="input-row" :class="{ focused: focusField === 'username' }">
-          <view class="icon-badge">
-            <view class="ic-user">
-              <view class="ic-user-head" />
-              <view class="ic-user-body" />
-            </view>
-          </view>
-          <input
-            v-model="form.username"
-            class="input"
-            type="text"
-            maxlength="20"
-            placeholder="请输入用户名（3-20 字符）"
-            placeholder-style="color: rgba(255,255,255,0.35)"
-            @focus="focusField = 'username'"
-            @blur="focusField = ''"
-          />
-        </view>
-
+        <beautiful-input v-model="form.username" type="text" icon="user" placeholder="请输入用户名（3-20 字符）" />
         <!-- 昵称 -->
-        <view class="input-row" :class="{ focused: focusField === 'nickname' }">
-          <view class="icon-badge">
-            <view class="ic-smile">
-              <view class="smile-face" />
-              <view class="smile-eye smile-eye-l" />
-              <view class="smile-eye smile-eye-r" />
-              <view class="smile-mouth" />
-            </view>
-          </view>
-          <input
-            v-model="form.nickname"
-            class="input"
-            type="text"
-            maxlength="20"
-            placeholder="请输入昵称"
-            placeholder-style="color: rgba(255,255,255,0.35)"
-            @focus="focusField = 'nickname'"
-            @blur="focusField = ''"
-          />
-        </view>
-
+        <beautiful-input v-model="form.nickname" type="text" icon="smile" placeholder="请输入昵称" />
         <!-- 密码 -->
-        <view class="input-row" :class="{ focused: focusField === 'password' }">
-          <view class="icon-badge">
-            <view class="ic-lock">
-              <view class="ic-lock-shackle" />
-              <view class="ic-lock-body">
-                <view class="ic-lock-hole" />
-              </view>
-            </view>
-          </view>
-          <input
-            v-model="form.password"
-            class="input"
-            :password="!showPwd"
-            maxlength="32"
-            placeholder="请输入密码（至少 6 位）"
-            placeholder-style="color: rgba(255,255,255,0.35)"
-            @focus="focusField = 'password'"
-            @blur="focusField = ''"
-          />
-          <view class="eye-btn" hover-class="eye-hover" :hover-stay-time="80" @tap="showPwd = !showPwd">
-            <view class="ic-eye" :class="{ closed: showPwd }">
-              <view class="ic-eye-outline" />
-              <view class="ic-eye-pupil" />
-              <view class="ic-eye-slash" />
-            </view>
-          </view>
-        </view>
-
+        <beautiful-input v-model="form.password" type="password" icon="lock" placeholder="请输入密码（至少 6 位）" />
         <!-- 确认密码 -->
-        <view class="input-row" :class="{ focused: focusField === 'confirmPassword' }">
-          <view class="icon-badge">
-            <view class="ic-shield">
-              <view class="shield-box" />
-              <view class="shield-check" />
-            </view>
-          </view>
-          <input
-            v-model="form.confirmPassword"
-            class="input"
-            :password="!showPwd2"
-            maxlength="32"
-            placeholder="请再次输入密码"
-            placeholder-style="color: rgba(255,255,255,0.35)"
-            @focus="focusField = 'confirmPassword'"
-            @blur="focusField = ''"
-          />
-          <view class="eye-btn" hover-class="eye-hover" :hover-stay-time="80" @tap="showPwd2 = !showPwd2">
-            <view class="ic-eye" :class="{ closed: showPwd2 }">
-              <view class="ic-eye-outline" />
-              <view class="ic-eye-pupil" />
-              <view class="ic-eye-slash" />
-            </view>
-          </view>
-        </view>
-
+        <beautiful-input v-model="form.confirmPassword" type="password" icon="shield" placeholder="请再次输入密码" />
         <!-- 邮箱 -->
-        <view class="input-row" :class="{ focused: focusField === 'email' }">
-          <view class="icon-badge">
-            <view class="ic-mail">
-              <view class="mail-body" />
-              <view class="mail-flap" />
-            </view>
-          </view>
-          <input
-            v-model="form.email"
-            class="input"
-            type="text"
-            placeholder="请输入邮箱"
-            placeholder-style="color: rgba(255,255,255,0.35)"
-            @focus="focusField = 'email'"
-            @blur="focusField = ''"
-          />
-        </view>
-
+        <beautiful-input v-model="form.email" type="text" icon="mail" placeholder="请输入邮箱" />
         <!-- 协议 -->
         <view class="agreement">
           <view class="check" @tap="agree = !agree">
@@ -171,28 +45,9 @@
         </view>
 
         <!-- 注册按钮 -->
-        <view class="btn-wrap">
-          <view
-            class="btn-register"
-            :class="{ clicking, loading: loading }"
-            hover-class="btn-hover"
-            :hover-stay-time="80"
-            @tap="onRegisterTap"
-          >
-            <text class="btn-text">{{ loading ? '注 册 中...' : '注 册' }}</text>
-          </view>
-          <!-- 粒子爆发层：8 向彩色光点飞散（数组遍历，避免数字 v-for 的编译器兼容问题） -->
-          <view v-if="burstKey > 0" :key="burstKey" class="btn-burst">
-            <view
-              v-for="i in rayIndexes"
-              :key="i"
-              class="ray"
-              :class="'ray' + i"
-            >
-              <view class="particle" :class="['pc' + (i % 4), i % 2 === 0 ? 'pt-near' : 'pt-far']" />
-            </view>
-          </view>
-        </view>
+        <beautiful-button @tap="onRegister">
+          <template #text>注册</template>
+        </beautiful-button>
       </view>
 
       <!-- 去登录 -->
@@ -201,11 +56,17 @@
         <text class="link" @tap="goLogin">去登录</text>
       </view>
     </view>
+    <beautiful-background />
   </view>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+
+// 组件
+import BeautifulBackground from '@/components/BeautifulBackground.vue';
+import BeautifulButton from '@/components/BeautifulButton.vue';
+import BeautifulInput from '@/components/BeautifulInput.vue';
 
 const form = reactive({
   username: '',
@@ -214,39 +75,12 @@ const form = reactive({
   confirmPassword: '',
   email: ''
 })
-const showPwd = ref(false)
-const showPwd2 = ref(false)
-const agree = ref(false)
-const focusField = ref('')
-const loading = ref(false)
-const burstKey = ref(0)
-/** 8 条粒子射线方向索引 */
-const rayIndexes = [1, 2, 3, 4, 5, 6, 7, 8]
-const clicking = ref(false)
-let popTimer: ReturnType<typeof setTimeout> | null = null
 
-const stars = [
-  { top: '12%', left: '18%', size: 2, delay: 0, duration: 2.4 },
-  { top: '22%', left: '78%', size: 3, delay: 0.6, duration: 3 },
-  { top: '38%', left: '8%', size: 2, delay: 1.2, duration: 2.8 },
-  { top: '8%', left: '55%', size: 2, delay: 0.3, duration: 2.2 },
-  { top: '55%', left: '90%', size: 2, delay: 0.9, duration: 2.6 },
-  { top: '70%', left: '12%', size: 3, delay: 1.5, duration: 3.2 }
-]
+const agree = ref(false)
+const loading = ref(false)
 
 function toast(title: string) {
   uni.showToast({ title, icon: 'none' })
-}
-
-/** 点击动效：粒子爆发 + 渐变涌动 + 过冲回弹，然后执行注册逻辑 */
-function onRegisterTap() {
-  if (loading.value) return
-  burstKey.value++
-  clicking.value = false
-  setTimeout(() => { clicking.value = true }, 30)
-  if (popTimer) clearTimeout(popTimer)
-  popTimer = setTimeout(() => { clicking.value = false }, 750)
-  onRegister()
 }
 
 function onRegister() {
@@ -287,62 +121,10 @@ function goLogin() {
 
 <style lang="scss" scoped>
 .page {
-  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(160deg, #2b1a5e 0%, #1a103a 45%, #241040 100%);
   position: relative;
   overflow: hidden;
-}
-
-/* ---- 背景光斑 ---- */
-.orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(0);
-  opacity: 0.55;
-  animation: orb-float 9s ease-in-out infinite;
-
-  &-1 {
-    width: 420rpx;
-    height: 420rpx;
-    top: -100rpx;
-    left: -120rpx;
-    background: radial-gradient(circle at 35% 35%, rgba($focus-purple, 0.55), rgba($focus-purple, 0) 68%);
-  }
-
-  &-2 {
-    width: 360rpx;
-    height: 360rpx;
-    top: 30%;
-    right: -140rpx;
-    background: radial-gradient(circle at 60% 40%, rgba($brand-pink, 0.45), rgba($brand-pink, 0) 68%);
-    animation-delay: 2.6s;
-  }
-
-  &-3 {
-    width: 460rpx;
-    height: 460rpx;
-    bottom: -140rpx;
-    left: 22%;
-    background: radial-gradient(circle at 50% 45%, rgba(91, 124, 255, 0.4), rgba(91, 124, 255, 0) 70%);
-    animation-delay: 5s;
-  }
-}
-@keyframes orb-float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(24rpx, -30rpx) scale(1.08); }
-}
-
-/* ---- 星星 ---- */
-.star {
-  position: absolute;
-  border-radius: 50%;
-  background: #ffffff;
-  opacity: 0.7;
-  animation: twinkle 2.6s ease-in-out infinite;
-}
-@keyframes twinkle {
-  0%, 100% { opacity: 0.15; transform: scale(0.8); }
-  50% { opacity: 0.9; transform: scale(1.15); }
 }
 
 /* ---- 返回按钮 ---- */
@@ -380,6 +162,7 @@ function goLogin() {
   flex-direction: column;
   align-items: center;
   padding: calc(var(--status-bar-height) + 60rpx) 44rpx calc(60rpx + env(safe-area-inset-bottom));
+  padding: 60rpx 64rpx 0;
 }
 
 /* ---- 默认头像：渐变底座 + 人形剪影（肩部贴合圆底裁切） ---- */
@@ -445,280 +228,6 @@ function goLogin() {
   border: 1rpx solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.35);
 }
-
-/* ---- 输入行（聚焦态：Vue class + :focus-within 双保险） ---- */
-.input-row {
-  display: flex;
-  align-items: center;
-  height: 100rpx;
-  margin-bottom: 24rpx;
-  padding: 0 24rpx;
-  border-radius: 26rpx;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1rpx solid rgba(255, 255, 255, 0.12);
-  transition: all 0.25s ease;
-
-  &.focused,
-  &:focus-within {
-    border-color: rgba($focus-purple, 0.9);
-    background: rgba(255, 255, 255, 0.12);
-    animation: focus-zap 0.45s ease-out, border-pulse 1.8s ease-in-out 0.45s infinite;
-  }
-}
-/* 聚焦瞬间：白光点亮 + 光环从内扩散 */
-@keyframes focus-zap {
-  0% {
-    border-color: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 0 0 0 rgba($focus-purple, 0.5), 0 0 0 rgba($brand-purple, 0);
-  }
-  100% {
-    border-color: rgba($focus-purple, 0.9);
-    box-shadow: 0 0 0 6rpx rgba($focus-ring, 0.18), 0 0 18rpx rgba($brand-purple, 0.35);
-  }
-}
-/* 持续呼吸：边框紫 ↔ 粉流转，光晕同步呼吸 */
-@keyframes border-pulse {
-  0%, 100% {
-    border-color: rgba($focus-purple, 0.9);
-    box-shadow: 0 0 0 6rpx rgba($focus-ring, 0.18), 0 0 18rpx rgba($brand-purple, 0.35);
-  }
-  50% {
-    border-color: rgba($brand-pink, 0.95);
-    box-shadow: 0 0 0 6rpx rgba($brand-pink, 0.2), 0 0 22rpx rgba($brand-pink, 0.4);
-  }
-}
-
-/* ---- 输入框图标底座 ---- */
-.icon-badge {
-  @include flex-center;
-  width: 60rpx;
-  height: 60rpx;
-  margin-right: 20rpx;
-  flex-shrink: 0;
-  border-radius: 16rpx;
-  background: $icon-badge-gradient;
-  border: 1rpx solid rgba(255, 255, 255, 0.18);
-}
-
-/* ---- 用户图标（头 + 肩身） ---- */
-.ic-user {
-  width: 30rpx;
-  height: 30rpx;
-
-  &-head {
-    width: 12rpx;
-    height: 12rpx;
-    margin: 0 auto;
-    border-radius: 50%;
-    background: #ffffff;
-  }
-
-  &-body {
-    width: 24rpx;
-    height: 13rpx;
-    margin: 3rpx auto 0;
-    border-radius: 12rpx 12rpx 5rpx 5rpx;
-    background: #ffffff;
-  }
-}
-
-/* ---- 昵称图标（笑脸） ---- */
-.ic-smile {
-  position: relative;
-  width: 30rpx;
-  height: 30rpx;
-
-  .smile-face {
-    width: 30rpx;
-    height: 30rpx;
-    border: 3rpx solid #ffffff;
-    border-radius: 50%;
-    box-sizing: border-box;
-  }
-
-  .smile-eye {
-    position: absolute;
-    top: 9rpx;
-    width: 4rpx;
-    height: 4rpx;
-    border-radius: 50%;
-    background: #ffffff;
-
-    &-l {
-      left: 8rpx;
-    }
-
-    &-r {
-      right: 8rpx;
-    }
-  }
-
-  .smile-mouth {
-    position: absolute;
-    bottom: 6rpx;
-    left: 50%;
-    width: 12rpx;
-    height: 7rpx;
-    margin-left: -6rpx;
-    border-left: 3rpx solid #ffffff;
-    border-right: 3rpx solid #ffffff;
-    border-bottom: 3rpx solid #ffffff;
-    border-radius: 0 0 14rpx 14rpx;
-    box-sizing: border-box;
-  }
-}
-
-/* ---- 锁图标（锁环 + 锁体 + 锁孔） ---- */
-.ic-lock {
-  width: 28rpx;
-  height: 32rpx;
-
-  &-shackle {
-    box-sizing: border-box;
-    width: 16rpx;
-    height: 13rpx;
-    margin: 0 auto;
-    border: 4rpx solid #ffffff;
-    border-bottom: none;
-    border-radius: 10rpx 10rpx 0 0;
-  }
-
-  &-body {
-    position: relative;
-    width: 26rpx;
-    height: 18rpx;
-    margin: 0 auto;
-    border-radius: 5rpx;
-    background: #ffffff;
-  }
-
-  &-hole {
-    position: absolute;
-    top: 4rpx;
-    left: 50%;
-    width: 6rpx;
-    height: 9rpx;
-    margin-left: -3rpx;
-    border-radius: 3rpx;
-    background: $dark-purple-base;
-  }
-}
-
-/* ---- 确认密码图标（盾牌勾选） ---- */
-.ic-shield {
-  position: relative;
-  width: 28rpx;
-  height: 28rpx;
-
-  .shield-box {
-    width: 28rpx;
-    height: 28rpx;
-    border: 3rpx solid #ffffff;
-    border-radius: 9rpx;
-    box-sizing: border-box;
-  }
-
-  .shield-check {
-    position: absolute;
-    top: 8rpx;
-    left: 8rpx;
-    width: 12rpx;
-    height: 7rpx;
-    border-left: 3rpx solid #ffffff;
-    border-bottom: 3rpx solid #ffffff;
-    transform: rotate(-45deg);
-  }
-}
-
-/* ---- 邮箱图标（信封） ---- */
-.ic-mail {
-  position: relative;
-  width: 30rpx;
-  height: 22rpx;
-
-  .mail-body {
-    width: 30rpx;
-    height: 22rpx;
-    border-radius: 4rpx;
-    background: #ffffff;
-  }
-
-  .mail-flap {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    width: 0;
-    height: 0;
-    margin-left: -11rpx;
-    border-left: 11rpx solid transparent;
-    border-right: 11rpx solid transparent;
-    border-top: 11rpx solid rgba($dark-purple, 0.55);
-  }
-}
-
-/* ---- 密码可见切换（眼睛） ---- */
-.eye-btn {
-  padding: 10rpx;
-}
-.eye-hover {
-  opacity: 0.6;
-  transform: scale(0.9);
-}
-.ic-eye {
-  position: relative;
-  width: 36rpx;
-  height: 24rpx;
-
-  &-outline {
-    box-sizing: border-box;
-    width: 34rpx;
-    height: 22rpx;
-    margin: 1rpx auto 0;
-    border: 3rpx solid $white-90;
-    border-radius: 50%;
-  }
-
-  &-pupil {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 10rpx;
-    height: 10rpx;
-    margin: -4rpx 0 0 -5rpx;
-    border-radius: 50%;
-    background: #ffffff;
-    transition: opacity 0.2s ease;
-  }
-
-  &-slash {
-    display: none;
-    position: absolute;
-    top: -3rpx;
-    left: 50%;
-    width: 4rpx;
-    height: 30rpx;
-    margin-left: -2rpx;
-    border-radius: 2rpx;
-    background: $brand-pink;
-    transform: rotate(40deg);
-  }
-
-  &.closed &-pupil {
-    opacity: 0.25;
-  }
-
-  &.closed &-slash {
-    display: block;
-  }
-}
-
-.input {
-  flex: 1;
-  height: 100rpx;
-  font-size: 30rpx;
-  color: #ffffff;
-}
-
 /* ---- 协议 ---- */
 .agreement {
   display: flex;

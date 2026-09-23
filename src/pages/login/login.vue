@@ -1,24 +1,5 @@
 <template>
   <view class="page">
-    <!-- 背景光斑 -->
-    <view class="orb orb-1" />
-    <view class="orb orb-2" />
-    <view class="orb orb-3" />
-    <!-- 星星点缀 -->
-    <view
-      v-for="(s, i) in stars"
-      :key="i"
-      class="star"
-      :style="{
-        top: s.top,
-        left: s.left,
-        width: s.size + 'px',
-        height: s.size + 'px',
-        animationDelay: s.delay + 's',
-        animationDuration: s.duration + 's'
-      }"
-    />
-
     <view class="content">
       <!-- Logo -->
       <view class="logo-wrap">
@@ -42,52 +23,8 @@
 
       <!-- 表单卡片 -->
       <view class="card">
-        <view class="input-row" :class="{ focused: focusField === 'username' }">
-          <view class="icon-badge">
-            <view class="ic-user">
-              <view class="ic-user-head" />
-              <view class="ic-user-body" />
-            </view>
-          </view>
-          <input
-            v-model="form.username"
-            class="input"
-            type="text"
-            placeholder="请输入账号 / 邮箱"
-            placeholder-style="color: rgba(255,255,255,0.35)"
-            @focus="focusField = 'username'"
-            @blur="focusField = ''"
-          />
-        </view>
-
-        <view class="input-row" :class="{ focused: focusField === 'password' }">
-          <view class="icon-badge">
-            <view class="ic-lock">
-              <view class="ic-lock-shackle" />
-              <view class="ic-lock-body">
-                <view class="ic-lock-hole" />
-              </view>
-            </view>
-          </view>
-          <input
-            v-model="form.password"
-            class="input"
-            :password="!showPwd"
-            placeholder="请输入密码"
-            placeholder-style="color: rgba(255,255,255,0.35)"
-            confirm-type="done"
-            @focus="focusField = 'password'"
-            @blur="focusField = ''"
-          />
-          <view class="eye-btn" hover-class="eye-hover" :hover-stay-time="80" @tap="showPwd = !showPwd">
-            <view class="ic-eye" :class="{ closed: showPwd }">
-              <view class="ic-eye-outline" />
-              <view class="ic-eye-pupil" />
-              <view class="ic-eye-slash" />
-            </view>
-          </view>
-        </view>
-
+        <beautiful-input v-model="form.username" type="text" icon="user" placeholder="请输入账号 / 邮箱" />
+        <beautiful-input v-model="form.password" type="password" icon="lock" placeholder="请输入密码" />
         <view class="row-between">
           <view class="check" @tap="remember = !remember">
             <view class="checkbox" :class="{ checked: remember }">
@@ -98,28 +35,9 @@
           <text class="link" @tap="onForgot">忘记密码？</text>
         </view>
 
-        <view class="btn-wrap">
-          <view
-            class="btn-login"
-            :class="{ clicking }"
-            hover-class="btn-hover"
-            :hover-stay-time="80"
-            @tap="onLoginTap"
-          >
-            <text class="btn-text">登 录</text>
-          </view>
-          <!-- 粒子爆发层：8 向彩色光点飞散（数组遍历，避免数字 v-for 的编译器兼容问题） -->
-          <view v-if="burstKey > 0" :key="burstKey" class="btn-burst">
-            <view
-              v-for="i in rayIndexes"
-              :key="i"
-              class="ray"
-              :class="'ray' + i"
-            >
-              <view class="particle" :class="['pc' + (i % 4), i % 2 === 0 ? 'pt-near' : 'pt-far']" />
-            </view>
-          </view>
-        </view>
+        <beautiful-button @tap="onLogin">
+          <template #text>登录</template>
+        </beautiful-button>
 
         <view class="register-row">
           <text class="gray-text">还没有账号？</text>
@@ -169,42 +87,32 @@
         <text class="link">《隐私政策》</text>
       </view>
     </view>
+    <beautiful-background />
   </view>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { reactive, ref, watch } from 'vue';
 
-const form = reactive({ username: '', password: '' })
+// 组件
+import BeautifulBackground from '@/components/BeautifulBackground.vue';
+import BeautifulButton from '@/components/BeautifulButton.vue';
+import BeautifulInput from '@/components/BeautifulInput.vue';
+
+const form = reactive({ username: '', password: '' });
 /** 用户头像：接入接口后赋值；为空、加载中或加载失败时显示默认头像 */
-const avatarUrl = ref('')
-const avatarLoaded = ref(false)
-const avatarFailed = ref(false)
+const avatarUrl = ref('');
+const avatarLoaded = ref(false);
+const avatarFailed = ref(false);
+
 watch(avatarUrl, () => {
   avatarLoaded.value = false
   avatarFailed.value = false
-})
-const showPwd = ref(false)
-const remember = ref(true)
-const agree = ref(false)
-const focusField = ref('')
-const loading = ref(false)
-const burstKey = ref(0)
-/** 8 条粒子射线方向索引 */
-const rayIndexes = [1, 2, 3, 4, 5, 6, 7, 8]
-const clicking = ref(false)
-let popTimer: ReturnType<typeof setTimeout> | null = null
+});
 
-const stars = [
-  { top: '8%', left: '12%', size: 3, delay: 0, duration: 2.6 },
-  { top: '15%', left: '78%', size: 2, delay: 0.6, duration: 3.2 },
-  { top: '26%', left: '8%', size: 2, delay: 1.1, duration: 2.8 },
-  { top: '32%', left: '88%', size: 3, delay: 0.3, duration: 3.6 },
-  { top: '45%', left: '16%', size: 2, delay: 1.6, duration: 2.4 },
-  { top: '52%', left: '70%', size: 2, delay: 0.9, duration: 3.0 },
-  { top: '64%', left: '86%', size: 2, delay: 1.3, duration: 2.7 },
-  { top: '70%', left: '6%', size: 3, delay: 0.4, duration: 3.4 }
-]
+const remember = ref(false)
+const agree = ref(false)
+const loading = ref(false)
 
 function onForgot() {
   uni.showToast({ title: '请联系管理员重置密码', icon: 'none' })
@@ -216,16 +124,6 @@ function onRegister() {
 
 function onSocial(name: string) {
   uni.showToast({ title: name + '开发中', icon: 'none' })
-}
-
-/** 点击动效：粒子爆发 + 渐变涌动 + 过冲回弹，然后执行登录逻辑 */
-function onLoginTap() {
-  burstKey.value++
-  clicking.value = false
-  setTimeout(() => { clicking.value = true }, 30)
-  if (popTimer) clearTimeout(popTimer)
-  popTimer = setTimeout(() => { clicking.value = false }, 750)
-  onLogin()
 }
 
 function onLogin() {
@@ -274,65 +172,6 @@ page {
   flex-direction: column;
   background: linear-gradient(160deg, #20124d 0%, #14082f 40%, #2a0a3d 75%, #12062b 100%);
   padding-top: var(--status-bar-height);
-}
-
-/* ---- 背景光斑（用 radial-gradient 模拟辉光，兼容小程序） ---- */
-.orb {
-  position: absolute;
-  border-radius: 50%;
-
-  &-1 {
-    width: 560rpx;
-    height: 560rpx;
-    top: -140rpx;
-    left: -120rpx;
-    background: radial-gradient(circle, rgba(124, 58, 237, 0.55) 0%, rgba(124, 58, 237, 0) 70%);
-    animation: float1 9s ease-in-out infinite alternate;
-  }
-
-  &-2 {
-    width: 640rpx;
-    height: 640rpx;
-    bottom: -180rpx;
-    right: -160rpx;
-    background: radial-gradient(circle, rgba(236, 72, 153, 0.4) 0%, rgba(236, 72, 153, 0) 70%);
-    animation: float2 12s ease-in-out infinite alternate;
-  }
-
-  &-3 {
-    width: 420rpx;
-    height: 420rpx;
-    top: 40%;
-    left: 55%;
-    background: radial-gradient(circle, rgba($brand-blue, 0.3) 0%, rgba($brand-blue, 0) 70%);
-    animation: float3 14s ease-in-out infinite alternate;
-  }
-}
-@keyframes float1 {
-  from { transform: translate(0, 0) scale(1); }
-  to { transform: translate(60rpx, 80rpx) scale(1.15); }
-}
-@keyframes float2 {
-  from { transform: translate(0, 0) scale(1); }
-  to { transform: translate(-80rpx, -60rpx) scale(1.1); }
-}
-@keyframes float3 {
-  from { transform: translate(0, 0); }
-  to { transform: translate(-60rpx, 60rpx); }
-}
-
-/* ---- 星星 ---- */
-.star {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 8rpx rgba(255, 255, 255, 0.9);
-  opacity: 0.3;
-  animation: twinkle 3s ease-in-out infinite;
-}
-@keyframes twinkle {
-  0%, 100% { opacity: 0.15; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.2); }
 }
 
 /* ---- 主体 ---- */
