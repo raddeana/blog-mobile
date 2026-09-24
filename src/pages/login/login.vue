@@ -115,7 +115,7 @@ const agree = ref(false)
 const loading = ref(false)
 
 function onForgot() {
-  uni.showToast({ title: '请联系管理员重置密码', icon: 'none' })
+  uni.navigateTo({ url: '/pages/forgot/forgot' })
 }
 
 function onRegister() {

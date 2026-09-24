@@ -25,6 +25,11 @@
       <view class="mail-body" />
       <view class="mail-flap" />
     </view>
+    <view class="ic-key" v-if="props.icon === 'key'">
+      <view class="key-ring" />
+      <view class="key-shaft" />
+      <view class="key-tooth" />
+    </view>
   </view>
   <input
     v-model="vModel"
@@ -272,6 +277,39 @@ const showPwd = ref(false);
     border-left: 11rpx solid transparent;
     border-right: 11rpx solid transparent;
     border-top: 11rpx solid rgba($dark-purple, 0.55);
+  }
+}
+
+/* ---- 验证码图标（钥匙：环 + 杆 + 齿） ---- */
+.ic-key {
+  position: relative;
+  width: 30rpx;
+  height: 14rpx;
+
+  .key-ring {
+    box-sizing: border-box;
+    width: 14rpx;
+    height: 14rpx;
+    border: 3rpx solid #ffffff;
+    border-radius: 50%;
+  }
+
+  .key-shaft {
+    position: absolute;
+    top: 5rpx;
+    left: 13rpx;
+    width: 14rpx;
+    height: 4rpx;
+    background: #ffffff;
+  }
+
+  .key-tooth {
+    position: absolute;
+    top: 9rpx;
+    right: 1rpx;
+    width: 4rpx;
+    height: 6rpx;
+    background: #ffffff;
   }
 }
 
