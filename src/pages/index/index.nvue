@@ -1,0 +1,371 @@
+<template>
+  <!-- 初始加载骨架屏 -->
+  <view class="page" :style="pageStyle">
+    <FeedSkeleton v-if="loading && feedList.length === 0" :count="4" />
+    <template v-else>
+      <!-- 顶部导航栏 -->
+      <view class="topbar">
+        <view class="topbar-inner" :style="{ paddingTop: statusBarHeight + 8 + 'px' }">
+          <!-- Tab 切换 -->
+          <view class="tab-switch">
+            <text class="tab-item" :class="{ 'tab-item-active': tab === 'recommend' }" @click="switchTab('recommend')">推荐</text>
+            <text class="tab-item" :class="{ 'tab-item-active': tab === 'follow' }" @click="switchTab('follow')">关注</text>
+            <!-- 滑动指示器 -->
+            <view class="tab-indicator" :class="{ 'tab-indicator-right': tab === 'follow' }" />
+          </view>
+          <!-- 搜索按钮 -->
+          <view class="search-btn" hover-class="search-hover" :hover-stay-time="80" @click="onSearch">
+            <view class="ic-search">
+              <view class="search-circle" />
+              <view class="search-handle" />
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- Feed 列表 -->
+      <scroll-view
+        scroll-y
+        class="body-scroll"
+        :style="{ flex: 1 }"
+        :refresher-enabled="true"
+        :refresher-triggered="refreshing"
+        @refresherrefresh="onRefresh"
+        @scrolltolower="onLoadMore"
+      >
+        <view class="feed-list" :style="{ paddingTop: (statusBarHeight + 44) + 'px' }">
+          <!-- 空态 -->
+          <view v-if="!loading && feedList.length === 0" class="empty-state">
+            <view class="empty-icon">
+              <view class="empty-circle" />
+              <view class="empty-bar" />
+            </view>
+            <text class="empty-text">暂无内容</text>
+          </view>
+
+          <!-- Feed 卡片 -->
+          <template v-else>
+            <FeedCard
+              v-for="item in feedList"
+              :key="item.id"
+              :item="item"
+              @card-tap="onCardTap"
+              @like="onLike"
+              @comment="onComment"
+              @share="onShare"
+              @follow="onFollow"
+              @vote="onVote"
+            />
+            <!-- 加载更多 -->
+            <view v-if="loading" class="load-more">
+              <view class="loading-dots">
+                <view class="dot dot-small" />
+                <view class="dot dot-small" />
+                <view class="dot dot-small" />
+              </view>
+              <text class="load-more-text">加载更多...</text>
+            </view>
+            <view v-else-if="!hasMore" class="load-more">
+              <text class="load-more-text">没有更多了</text>
+            </view>
+          </template>
+        </view>
+      </scroll-view>
+
+      <!-- 底部 TabBar -->
+      <CustomTabBar current="/pages/index/index" /> 
+    </template>
+  </view>
+</template>
+<style lang="scss">
+.page {
+  flex: 1;
+  flex-direction: column;
+  background-color: #f5f5f7;
+}
+
+/* ---- 顶部导航栏 ---- */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: rgba(255, 255, 255, 0.96);
+  border-bottom-width: 1rpx;
+  border-bottom-style: solid;
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+  flex-direction: column;
+}
+.topbar-inner {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 32rpx;
+  padding-right: 32rpx;
+  padding-bottom: 16rpx;
+}
+
+/* ---- Tab 切换 ---- */
+.tab-switch {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.tab-item {
+  font-size: 32rpx;
+  color: #999;
+  font-weight: 500;
+  margin-right: 48rpx;
+}
+.tab-item-active {
+  color: #1a1a1a;
+  font-weight: 700;
+  font-size: 36rpx;
+}
+.tab-indicator {
+  position: absolute;
+  bottom: -8rpx;
+  left: 0;
+  width: 48rpx;
+  height: 6rpx;
+  border-radius: 3rpx;
+  background-image: linear-gradient(90deg, #7b5cff, #ff5c9d);
+  transition: transform 0.3s ease;
+}
+.tab-indicator-right {
+  transform: translateX(112rpx);
+}
+
+/* ---- 搜索按钮 ---- */
+.search-btn {
+  padding: 10rpx;
+  flex-direction: column;
+}
+.search-hover {
+  opacity: 0.6;
+}
+.ic-search {
+  position: relative;
+  width: 36rpx;
+  height: 36rpx;
+  flex-direction: column;
+}
+.search-circle {
+  width: 24rpx;
+  height: 24rpx;
+  border-width: 4rpx;
+  border-style: solid;
+  border-color: #666;
+  border-radius: 12rpx;
+}
+.search-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12rpx;
+  height: 4rpx;
+  background-color: #666;
+  border-radius: 2rpx;
+  transform: rotate(45deg);
+}
+
+/* ---- Feed 列表 ---- */
+.feed-list {
+  padding-left: 24rpx;
+  padding-right: 24rpx;
+  padding-bottom: 20rpx;
+  flex-direction: column;
+}
+
+/* ---- 加载态 ---- */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 120rpx;
+  padding-bottom: 120rpx;
+}
+.loading-dots {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 8rpx;
+  background-color: #7b5cff;
+  margin-left: 8rpx;
+  margin-right: 8rpx;
+}
+.dot-small {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 5rpx;
+}
+.loading-text {
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* ---- 空态 ---- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 160rpx;
+  padding-bottom: 160rpx;
+}
+.empty-icon {
+  position: relative;
+  width: 120rpx;
+  height: 120rpx;
+  flex-direction: column;
+  align-items: center;
+}
+.empty-circle {
+  width: 80rpx;
+  height: 80rpx;
+  border-width: 6rpx;
+  border-style: solid;
+  border-color: rgba(123, 92, 255, 0.2);
+  border-radius: 40rpx;
+}
+.empty-bar {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 40rpx;
+  height: 6rpx;
+  margin-left: -20rpx;
+  border-radius: 3rpx;
+  background-color: rgba(123, 92, 255, 0.2);
+}
+.empty-text {
+  margin-top: 24rpx;
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* ---- 加载更多 ---- */
+.load-more {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding-top: 40rpx;
+  padding-bottom: 40rpx;
+}
+.load-more-text {
+  font-size: 24rpx;
+  color: #999;
+  margin-left: 16rpx;
+}
+</style>
+<script setup lang="ts">
+import { ref, reactive, onMounted } from 'vue'
+import { fetchFeed, toggleLike, castVote } from '@/api/feed'
+import type { FeedItem } from '@/api/feed'
+import FeedCard from '@/components/FeedCard.nvue'
+import FeedSkeleton from '@/components/FeedSkeleton.nvue'
+import CustomTabBar from '@/components/CustomTabBar.nvue'
+
+const sys = uni.getSystemInfoSync()
+const statusBarHeight = sys.statusBarHeight || 0
+const safeBottom = sys.safeAreaInsets?.bottom || 0
+const pageStyle = { paddingBottom: (50 + safeBottom) + 'px' }
+
+const tab = ref<'recommend' | 'follow'>('recommend')
+const feedList = ref<FeedItem[]>([])
+// 初值 true：首帧直接渲染骨架屏，避免先闪空态再切骨架
+const loading = ref(true)
+const hasMore = ref(true)
+const refreshing = ref(false)
+const page = reactive({ page: 1, pageSize: 5 })
+
+/* ---- 加载数据 ---- */
+async function loadFeed(reset = false) {
+  // 仅拦截“加载更多”重入；首屏/切 tab/下拉刷新（reset）允许进入
+  if (loading.value && !reset) return
+  loading.value = true
+  if (reset) {
+    page.page = 1
+    hasMore.value = true
+  }
+  const result = await fetchFeed({
+    page: page.page,
+    pageSize: page.pageSize,
+    tab: tab.value,
+  })
+  if (reset) {
+    feedList.value = result.list
+  } else {
+    feedList.value.push(...result.list)
+  }
+  hasMore.value = result.hasMore
+  page.page++
+  loading.value = false
+}
+
+/* ---- Tab 切换 ---- */
+function switchTab(t: 'recommend' | 'follow') {
+  if (tab.value === t) return
+  tab.value = t
+  loadFeed(true)
+}
+
+/* ---- 下拉刷新 ---- */
+async function onRefresh() {
+  refreshing.value = true
+  await loadFeed(true)
+  refreshing.value = false
+}
+
+/* ---- 上拉加载 ---- */
+function onLoadMore() {
+  if (hasMore.value && !loading.value) {
+    loadFeed(false)
+  }
+}
+
+/* ---- 互动事件 ---- */
+function onLike(item: FeedItem) {
+  item.liked = !item.liked
+  toggleLike(item.id, item.liked)
+}
+
+function onComment(item: FeedItem) {
+  uni.navigateTo({ url: '/pages/comment/comment?id=' + item.id })
+}
+
+function onShare(item: FeedItem) {
+  uni.showToast({ title: '转发功能开发中', icon: 'none' })
+}
+
+function onFollow(id: number) {
+  uni.showToast({ title: '关注成功', icon: 'none' })
+}
+
+function onVote(pollId: number, optionId: number) {
+  castVote(pollId, optionId)
+}
+
+function onCardTap(item: FeedItem) {
+  uni.navigateTo({ url: '/pages/detail/detail?id=' + item.id })
+}
+
+function onSearch() {
+  uni.navigateTo({ url: '/pages/search/search' })
+}
+
+onMounted(() => {
+  loadFeed(true)
+})
+</script>

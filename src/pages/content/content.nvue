@@ -1,0 +1,478 @@
+<template>
+  <view class="page" :style="pageStyle">
+    <!-- 顶部导航栏 -->
+    <view class="topbar">
+      <view class="topbar-inner" :style="{ paddingTop: statusBarHeight + 8 + 'px' }">
+        <text class="topbar-title">内容管理</text>
+        <!-- 新建按钮 -->
+        <view class="new-btn" hover-class="new-hover" :hover-stay-time="80" @tap="onNew">
+          <view class="ic-plus">
+            <view class="plus-h" />
+            <view class="plus-v" />
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 内容列表（nvue 无 onPullDownRefresh，下拉刷新改用 scroll-view refresher） -->
+    <scroll-view
+      scroll-y
+      class="body-scroll"
+      :style="{ flex: 1 }"
+      refresher-enabled
+      :refresher-triggered="refreshing"
+      @refresherrefresh="onRefresh"
+    >
+      <view class="content" :style="{ paddingTop: (statusBarHeight + 44) + 'px' }">
+        <!-- 初始加载骨架屏 -->
+        <ContentSkeleton v-if="loading && list.length === 0" :count="3" />
+
+        <!-- 空态 -->
+        <view v-else-if="!loading && list.length === 0" class="empty-state">
+          <view class="empty-icon">
+            <view class="empty-circle" />
+            <view class="empty-bar" />
+          </view>
+          <text class="empty-text">还没有发布过内容</text>
+          <view class="empty-cta" hover-class="cta-hover" :hover-stay-time="80" @tap="onNew">
+            <text class="empty-cta-text">立即发布</text>
+          </view>
+        </view>
+
+        <!-- 列表 -->
+        <view v-else class="content-list">
+          <view
+            v-for="item in list"
+            :key="item.id"
+            class="content-card"
+          >
+            <!-- 类型徽章 -->
+            <view class="card-type-badge" :class="'badge-' + item.type">
+              <text class="badge-text">{{ typeLabel(item.type) }}</text>
+            </view>
+
+            <!-- 卡片主体 -->
+            <view class="card-main">
+              <text v-if="item.type === 'article'" class="card-title" lines="1">{{ item.title }}</text>
+              <text class="card-excerpt" lines="2">{{ excerpt(item) }}</text>
+
+              <!-- 媒体计数 -->
+              <view v-if="item.type !== 'poll' && item.medias.length > 0" class="card-media-count">
+                <view class="media-dot" />
+                <text class="media-count-text">{{ item.medias.length }} 个附件</text>
+              </view>
+              <view v-else-if="item.type === 'poll'" class="card-media-count">
+                <view class="media-dot" />
+                <text class="media-count-text">{{ item.pollOptions.length }} 个选项</text>
+              </view>
+
+              <!-- 元信息 + 操作 -->
+              <view class="card-meta">
+                <text class="meta-time">{{ formatTime(item.updatedAt) }}</text>
+                <view class="meta-status" :class="{ 'meta-status-draft': item.status === 'draft' }">
+                  <text class="status-text" :class="{ 'status-text-draft': item.status === 'draft' }">{{ item.status === 'draft' ? '草稿' : '已发布' }}</text>
+                </view>
+                <!-- weex 不支持 margin-left: auto，用弹性占位把操作推到行尾 -->
+                <view class="meta-spacer" />
+                <view class="edit-btn" hover-class="action-hover" :hover-stay-time="80" @tap.stop="onEdit(item)">
+                  <text class="action-text edit-text">编辑</text>
+                </view>
+                <view class="delete-btn" hover-class="action-hover" :hover-stay-time="80" @tap.stop="onDelete(item)">
+                  <text class="action-text delete-text">删除</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 底部 TabBar -->
+    <CustomTabBar current="/pages/content/content" />
+  </view>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { fetchMyContent, deleteContent, consumeMyContentDirty } from '@/api/content'
+import type { ContentItem } from '@/api/content'
+import { formatTime } from '@/utils/detail-logic'
+import { summarize, contentTypeLabel } from '@/utils/content-logic'
+// 组件（nvue 页面引用同名 nvue 组件，import 不带扩展名）
+import CustomTabBar from '@/components/CustomTabBar'
+import ContentSkeleton from '@/components/ContentSkeleton'
+
+const list = ref<ContentItem[]>([])
+// 初值 true：首帧直接渲染骨架屏，避免先闪空态再切骨架
+const loading = ref(true)
+// 下拉刷新状态（替代 onPullDownRefresh）
+const refreshing = ref(false)
+
+// 状态栏 / 底部安全区：原 CSS 状态栏变量与安全区占位改为 JS 计算
+const sys = uni.getSystemInfoSync()
+const statusBarHeight = sys.statusBarHeight || 0
+const safeBottom = sys.safeAreaInsets?.bottom || 0
+
+// 根节点预留底部 tabbar（50px）+ 安全区高度
+const pageStyle = { paddingBottom: safeBottom + 50 + 'px' }
+
+// silent：后台静默刷新（如从编辑页返回），不切骨架屏，避免内容闪烁
+async function loadList(silent = false) {
+  if (!silent) loading.value = true
+  list.value = await fetchMyContent()
+  loading.value = false
+}
+
+onMounted(() => loadList())
+
+// 从 editor 返回 / 从其它 tab 切回时检测 dirty 刷新（静默）
+onShow(() => {
+  if (consumeMyContentDirty()) loadList(true)
+})
+
+// scroll-view refresher 下拉刷新
+async function onRefresh() {
+  refreshing.value = true
+  await loadList()
+  refreshing.value = false
+}
+
+function typeLabel(type: ContentItem['type']) {
+  return contentTypeLabel(type)
+}
+
+function excerpt(item: ContentItem): string {
+  if (item.type === 'article') return summarize(item.body, 50)
+  if (item.type === 'message') return summarize(item.body, 50)
+  return summarize(item.body, 50)
+}
+
+function onEdit(item: ContentItem) {
+  uni.navigateTo({ url: `/pages/content/editor?id=${item.id}&type=${item.type}` })
+}
+
+function onNew() {
+  uni.navigateTo({ url: '/pages/content/editor?type=article' })
+}
+
+async function onDelete(item: ContentItem) {
+  const res = await uni.showModal({
+    title: '删除内容',
+    content: `确认删除这条${contentTypeLabel(item.type)}？此操作不可撤销。`,
+    confirmText: '删除',
+    confirmColor: '#ff5c9d',
+    cancelText: '取消',
+  })
+  if (res.confirm) {
+    await deleteContent(item.id)
+    uni.showToast({ title: '已删除', icon: 'success' })
+    loadList()
+  }
+}
+</script>
+
+<style lang="scss">
+/* nvue 样式全局生效；page{} 选择器不可用，页面背景写在根节点上 */
+.page {
+  flex: 1;
+  flex-direction: column;
+  background-color: #f5f5f7;
+}
+.body-scroll {
+  flex: 1;
+}
+
+/* ---- 顶部导航栏 ---- */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.96);
+  border-bottom-width: 1rpx;
+  border-bottom-style: solid;
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+.topbar-inner {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  /* 状态栏高度由内联 paddingTop 注入 */
+  padding-left: 24rpx;
+  padding-right: 24rpx;
+  padding-bottom: 16rpx;
+}
+.topbar-title {
+  flex: 1;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+/* ---- 新建按钮 ---- */
+.new-btn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background-image: $button-gradient;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(123, 92, 255, 0.3);
+}
+.new-hover {
+  opacity: 0.85;
+  transform: scale(0.95);
+}
+.ic-plus {
+  position: relative;
+  width: 32rpx;
+  height: 32rpx;
+  flex-direction: row;
+}
+.plus-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 32rpx;
+  height: 4rpx;
+  margin-top: -2rpx;
+  background-color: #ffffff;
+  border-radius: 2rpx;
+}
+.plus-v {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 4rpx;
+  height: 32rpx;
+  margin-left: -2rpx;
+  background-color: #ffffff;
+  border-radius: 2rpx;
+}
+
+/* ---- 内容区（顶部内边距 = 状态栏 + 44，由内联样式注入，避开固定 topbar） ---- */
+.content {
+  flex-direction: column;
+  padding-left: 24rpx;
+  padding-right: 24rpx;
+  padding-bottom: 20rpx;
+}
+
+/* ---- 加载态（nvue 不支持 @keyframes/animation，改为静态圆点） ---- */
+.loading-state {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+.loading-dots {
+  flex-direction: row;
+  align-items: center;
+}
+.dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background-color: #7b5cff;
+  margin-left: 8rpx;
+  margin-right: 8rpx;
+}
+.loading-text {
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  color: #999999;
+}
+
+/* ---- 空态 ---- */
+.empty-state {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+.empty-icon {
+  position: relative;
+  width: 120rpx;
+  height: 120rpx;
+  flex-direction: column;
+  align-items: center;
+}
+.empty-circle {
+  width: 80rpx;
+  height: 80rpx;
+  border-width: 6rpx;
+  border-style: solid;
+  border-color: rgba(123, 92, 255, 0.2);
+  border-radius: 50%;
+}
+.empty-bar {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 40rpx;
+  height: 6rpx;
+  margin-left: -20rpx;
+  border-radius: 3rpx;
+  background-color: rgba(123, 92, 255, 0.2);
+}
+.empty-text {
+  margin-top: 24rpx;
+  font-size: 28rpx;
+  color: #999999;
+}
+.empty-cta {
+  margin-top: 32rpx;
+  padding: 16rpx 48rpx;
+  background-image: $button-gradient;
+  border-radius: 40rpx;
+  box-shadow: 0 4rpx 16rpx rgba(123, 92, 255, 0.3);
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+.empty-cta-text {
+  font-size: 26rpx;
+  color: #ffffff;
+}
+.cta-hover {
+  opacity: 0.85;
+  transform: scale(0.96);
+}
+
+/* ---- 内容列表 ---- */
+.content-list {
+  flex-direction: column;
+}
+.content-card {
+  flex-direction: row;
+  align-items: flex-start;
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  margin-bottom: 20rpx;
+  padding: 28rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+/* ---- 类型徽章（nvue 无复合状态选择器，类型色用元素级条件 class） ---- */
+.card-type-badge {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 80rpx;
+  height: 36rpx;
+  border-radius: 18rpx;
+  flex-shrink: 0;
+  margin-right: 20rpx;
+}
+.badge-article {
+  background-image: linear-gradient(135deg, #7b5cff, #b750ff);
+}
+.badge-message {
+  background-image: linear-gradient(135deg, #38bdf8, #7b5cff);
+}
+.badge-poll {
+  background-image: linear-gradient(135deg, #ff5c9d, #fbbf24);
+}
+.badge-text {
+  font-size: 20rpx;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ---- 卡片主体 ---- */
+.card-main {
+  flex: 1;
+  flex-direction: column;
+}
+.card-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8rpx;
+  text-overflow: ellipsis;
+}
+.card-excerpt {
+  font-size: 26rpx;
+  color: #666666;
+  line-height: 40rpx;
+}
+
+/* ---- 媒体计数 ---- */
+.card-media-count {
+  flex-direction: row;
+  align-items: center;
+  margin-top: 10rpx;
+}
+.media-dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background-color: #b28bff;
+  margin-right: 8rpx;
+}
+.media-count-text {
+  font-size: 22rpx;
+  color: #999999;
+}
+
+/* ---- 元信息 + 操作 ---- */
+.card-meta {
+  flex-direction: row;
+  align-items: center;
+  margin-top: 16rpx;
+}
+.meta-time {
+  font-size: 22rpx;
+  color: #999999;
+}
+.meta-status {
+  margin-left: 16rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  background-color: rgba(123, 92, 255, 0.1);
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+/* 草稿态：nvue 无 .meta-status.draft 复合选择器，改元素级条件 class */
+.meta-status-draft {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.status-text {
+  font-size: 20rpx;
+  color: #7b5cff;
+}
+.status-text-draft {
+  color: #999999;
+}
+.meta-spacer {
+  flex: 1;
+}
+.edit-btn {
+  flex-direction: row;
+  align-items: center;
+  padding: 6rpx 20rpx;
+}
+.delete-btn {
+  flex-direction: row;
+  align-items: center;
+  padding: 6rpx 20rpx;
+}
+.action-hover {
+  opacity: 0.6;
+}
+.action-text {
+  font-size: 24rpx;
+}
+.edit-text {
+  color: #7b5cff;
+}
+.delete-text {
+  color: #ff5c9d;
+}
+</style>

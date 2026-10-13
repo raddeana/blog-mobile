@@ -1,0 +1,117 @@
+<template>
+  <!-- 内容管理卡片骨架：nvue 不支持 @keyframes，呼吸效果由 JS 定时器驱动 opacity -->
+  <view class="sk-list">
+    <view v-for="n in count" :key="n" class="sk-ccard">
+      <!-- 类型徽章 -->
+      <view class="sk-b sk-badge" :style="blockStyle(0)" />
+      <!-- 卡片主体 -->
+      <view class="sk-cmain">
+        <view class="sk-b sk-ctitle" :style="blockStyle(1)" />
+        <view class="sk-b sk-cline sk-cline-1" :style="blockStyle(2)" />
+        <view class="sk-b sk-cline sk-cline-2" :style="blockStyle(3)" />
+        <view class="sk-cmeta">
+          <view class="sk-b sk-ctime" :style="blockStyle(4)" />
+          <view class="sk-b sk-cstatus" :style="blockStyle(5)" />
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+
+withDefaults(defineProps<{ count?: number }>(), { count: 3 })
+
+/* ---- 呼吸动画：奇偶块交替明暗，850ms 翻转一次 ---- */
+const pulse = ref(false)
+let timer: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  timer = setInterval(() => {
+    pulse.value = !pulse.value
+  }, 850)
+})
+
+onBeforeUnmount(() => {
+  if (timer) clearInterval(timer)
+})
+
+function blockStyle(i: number) {
+  const bright = (i % 2 === 0) === pulse.value
+  return { opacity: bright ? 1 : 0.4 }
+}
+</script>
+
+<style lang="scss">
+.sk-list {
+  flex-direction: column;
+}
+
+/* ---- 卡片（与 content-card 同尺寸） ---- */
+.sk-ccard {
+  flex-direction: row;
+  align-items: flex-start;
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  margin-bottom: 20rpx;
+  padding: 28rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+/* ---- 呼吸块基础类 ---- */
+.sk-b {
+  background-color: #ececf0;
+  border-radius: 8rpx;
+  transition-property: opacity;
+  transition-duration: 700ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* ---- 类型徽章 ---- */
+.sk-badge {
+  width: 80rpx;
+  height: 36rpx;
+  border-radius: 18rpx;
+  flex-shrink: 0;
+}
+
+/* ---- 主体 ---- */
+.sk-cmain {
+  flex: 1;
+  flex-direction: column;
+  margin-left: 20rpx;
+}
+.sk-ctitle {
+  width: 300rpx;
+  height: 30rpx;
+  margin-bottom: 12rpx;
+}
+.sk-cline {
+  height: 26rpx;
+  margin-bottom: 10rpx;
+}
+.sk-cline-1 {
+  width: 440rpx;
+}
+.sk-cline-2 {
+  width: 320rpx;
+  margin-bottom: 16rpx;
+}
+
+/* ---- 元信息行 ---- */
+.sk-cmeta {
+  flex-direction: row;
+  align-items: center;
+}
+.sk-ctime {
+  width: 150rpx;
+  height: 22rpx;
+}
+.sk-cstatus {
+  width: 80rpx;
+  height: 30rpx;
+  border-radius: 8rpx;
+  margin-left: 16rpx;
+}
+</style>

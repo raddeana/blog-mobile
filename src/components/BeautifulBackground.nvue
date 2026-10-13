@@ -1,0 +1,83 @@
+<template>
+    <!-- 背景组件根容器：绝对定位铺满页面，置于内容层之下（nvue 组件需单根节点） -->
+    <view class="bg-root">
+        <!-- 背景光斑（原浮动动画已删除，改为静态定位；radial 柔光用 linear-gradient 近似） -->
+        <view class="orb orb-1" />
+        <view class="orb orb-2" />
+        <view class="orb orb-3" />
+        <!-- 星星点缀（原闪烁动画已删除，改为静态圆点） -->
+        <view
+            v-for="(s, i) in stars"
+            :key="i"
+            class="star"
+            :style="{
+                top: s.top,
+                left: s.left,
+                width: s.size + 'px',
+                height: s.size + 'px'
+            }"
+        />
+    </view>
+</template>
+
+<script setup lang="ts">
+const stars = [
+    { top: '8%', left: '12%', size: 3 },
+    { top: '15%', left: '78%', size: 2 },
+    { top: '26%', left: '8%', size: 2 },
+    { top: '32%', left: '88%', size: 3 },
+    { top: '45%', left: '16%', size: 2 },
+    { top: '52%', left: '70%', size: 2 },
+    { top: '64%', left: '86%', size: 2 },
+    { top: '70%', left: '6%', size: 3 },
+];
+</script>
+
+<style lang="scss">
+/* nvue 样式全局生效，类名已避免与页面/其它组件冲突 */
+/* 根容器 */
+.bg-root {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: column;
+}
+
+/* ---- 背景光斑（静态） ---- */
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.55;
+}
+.orb-1 {
+    width: 420rpx;
+    height: 420rpx;
+    top: -100rpx;
+    left: -120rpx;
+    background-image: linear-gradient(135deg, rgba($focus-purple, 0.55), rgba($focus-purple, 0) 68%);
+}
+.orb-2 {
+    width: 360rpx;
+    height: 360rpx;
+    top: 30%;
+    right: -140rpx;
+    background-image: linear-gradient(120deg, rgba($brand-pink, 0.45), rgba($brand-pink, 0) 68%);
+}
+.orb-3 {
+    width: 460rpx;
+    height: 460rpx;
+    bottom: -140rpx;
+    left: 22%;
+    background-image: linear-gradient(180deg, rgba(91, 124, 255, 0.4), rgba(91, 124, 255, 0) 70%);
+}
+
+/* ---- 星星（静态） ---- */
+.star {
+    position: absolute;
+    border-radius: 50%;
+    background-color: #ffffff;
+    opacity: 0.7;
+}
+</style>

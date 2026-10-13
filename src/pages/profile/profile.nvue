@@ -1,0 +1,337 @@
+<template>
+  <view class="page" :style="pageStyle">
+    <scroll-view scroll-y class="body-scroll" :style="{ flex: 1 }">
+      <view class="scroll-content">
+        <!-- 顶部渐变区域（随页滚动，状态栏高度由内联 paddingTop 注入） -->
+        <view class="hero" :style="{ paddingTop: statusBarHeight + 'px' }">
+          <view class="hero-inner">
+            <!-- 默认头像 -->
+            <view class="logo-wrap">
+              <view class="avatar-default">
+                <view class="avatar-head" />
+                <view class="avatar-body" />
+              </view>
+            </view>
+            <text class="username">博客单用户</text>
+            <text class="bio">这个人很懒，什么都没留下</text>
+
+            <!-- 数据统计 -->
+            <view class="stats">
+              <view class="stat-item">
+                <text class="stat-num">0</text>
+                <text class="stat-label">关注</text>
+              </view>
+              <view class="stat-divider" />
+              <view class="stat-item">
+                <text class="stat-num">0</text>
+                <text class="stat-label">粉丝</text>
+              </view>
+              <view class="stat-divider" />
+              <view class="stat-item">
+                <text class="stat-num">0</text>
+                <text class="stat-label">获赞</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 功能列表 -->
+        <view class="menu-card">
+          <view class="menu-item" hover-class="menu-hover" :hover-stay-time="80" @tap="onMenu('我的文章')">
+            <view class="menu-icon ic-article">
+              <view class="art-doc" />
+              <view class="art-line art-line-1" />
+              <view class="art-line art-line-2" />
+            </view>
+            <text class="menu-text">我的文章</text>
+            <view class="menu-arrow" />
+          </view>
+          <view class="menu-item" hover-class="menu-hover" :hover-stay-time="80" @tap="onMenu('我的投票')">
+            <view class="menu-icon ic-chart">
+              <view class="chart-bar chart-bar-1" />
+              <view class="chart-bar chart-bar-2" />
+              <view class="chart-bar chart-bar-3" />
+            </view>
+            <text class="menu-text">我的投票</text>
+            <view class="menu-arrow" />
+          </view>
+          <view class="menu-item" hover-class="menu-hover" :hover-stay-time="80" @tap="onMenu('收藏夹')">
+            <view class="menu-icon ic-star">
+              <!-- nvue 不支持 clip-path：两个正方形错位 45° 叠成八角星 -->
+              <view class="star-shape">
+                <view class="star-part star-a" />
+                <view class="star-part star-b" />
+              </view>
+            </view>
+            <text class="menu-text">收藏夹</text>
+            <view class="menu-arrow" />
+          </view>
+          <view class="menu-item menu-item-last" hover-class="menu-hover" :hover-stay-time="80" @tap="onMenu('设置')">
+            <view class="menu-icon ic-gear">
+              <view class="gear-circle" />
+              <view class="gear-dot" />
+            </view>
+            <text class="menu-text">设置</text>
+            <view class="menu-arrow" />
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 底部 TabBar -->
+    <CustomTabBar current="/pages/profile/profile" />
+  </view>
+</template>
+
+<script setup lang="ts">
+// 组件（nvue 页面引用同名 nvue 组件，import 不带扩展名）
+import CustomTabBar from '@/components/CustomTabBar'
+
+// 状态栏 / 底部安全区：原 CSS 状态栏变量与安全区占位改为 JS 计算
+const sys = uni.getSystemInfoSync()
+const statusBarHeight = sys.statusBarHeight || 0
+const safeBottom = sys.safeAreaInsets?.bottom || 0
+
+// 根节点预留底部 tabbar（50px）+ 安全区高度
+const pageStyle = { paddingBottom: safeBottom + 50 + 'px' }
+
+function onMenu(title: string) {
+  uni.showToast({ title: title + '开发中', icon: 'none' })
+}
+</script>
+
+<style lang="scss">
+/* nvue 样式全局生效；page{} 选择器不可用，页面背景写在根节点上 */
+.page {
+  flex: 1;
+  flex-direction: column;
+  background-color: #f5f5f7;
+}
+.body-scroll {
+  flex: 1;
+}
+.scroll-content {
+  flex-direction: column;
+}
+
+/* ---- 顶部渐变区域 ---- */
+.hero {
+  flex-direction: column;
+  background-image: linear-gradient(160deg, #2b1a5e 0%, #1a103a 45%, #241040 100%);
+}
+.hero-inner {
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 0 60rpx;
+}
+.logo-wrap {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  padding: 5rpx;
+  flex-direction: column;
+  background-image: linear-gradient(135deg, #7b5cff, #ff5c9d);
+  box-shadow: 0 12rpx 40rpx rgba(123, 92, 255, 0.4);
+}
+.avatar-default {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-image: linear-gradient(160deg, #8f6bff 0%, #b750ff 55%, #ff5c9d 100%);
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+.avatar-head {
+  width: 42rpx;
+  height: 42rpx;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.96);
+}
+.avatar-body {
+  width: 96rpx;
+  height: 42rpx;
+  margin-top: 6rpx;
+  border-top-left-radius: 48rpx;
+  border-top-right-radius: 48rpx;
+  background-color: rgba(255, 255, 255, 0.96);
+}
+.username {
+  margin-top: 24rpx;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 2rpx;
+}
+.bio {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ---- 数据统计 ---- */
+.stats {
+  flex-direction: row;
+  align-items: center;
+  margin-top: 32rpx;
+}
+.stat-item {
+  flex-direction: column;
+  align-items: center;
+  padding: 0 32rpx;
+}
+.stat-num {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+.stat-label {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.5);
+}
+.stat-divider {
+  width: 1rpx;
+  height: 40rpx;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ---- 功能列表 ---- */
+.menu-card {
+  flex-direction: column;
+  margin: 24rpx;
+  padding: 0 28rpx;
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+.menu-item {
+  flex-direction: row;
+  align-items: center;
+  height: 100rpx;
+  border-bottom-width: 1rpx;
+  border-bottom-style: solid;
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+/* nvue 无 :last-child，末项分隔线用元素级 class 去除 */
+.menu-item-last {
+  border-bottom-width: 0;
+}
+.menu-hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+.menu-icon {
+  position: relative;
+  width: 48rpx;
+  height: 48rpx;
+  margin-right: 24rpx;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+.menu-text {
+  flex: 1;
+  font-size: 30rpx;
+  color: #333333;
+}
+.menu-arrow {
+  width: 16rpx;
+  height: 16rpx;
+  border-top-width: 3rpx;
+  border-top-style: solid;
+  border-top-color: #ccc;
+  border-right-width: 3rpx;
+  border-right-style: solid;
+  border-right-color: #ccc;
+  transform: rotate(45deg);
+}
+
+/* ---- 文章图标 ---- */
+.art-doc {
+  width: 28rpx;
+  height: 36rpx;
+  border-width: 3rpx;
+  border-style: solid;
+  border-color: #7b5cff;
+  border-radius: 4rpx;
+}
+.art-line {
+  position: absolute;
+  left: 50%;
+  width: 16rpx;
+  height: 2rpx;
+  margin-left: -8rpx;
+  background-color: #7b5cff;
+}
+.art-line-1 {
+  top: 12rpx;
+}
+.art-line-2 {
+  top: 20rpx;
+  width: 12rpx;
+  margin-left: -6rpx;
+}
+
+/* ---- 图表图标（覆盖 .menu-icon 的垂直居中，柱条底对齐） ---- */
+.ic-chart {
+  align-items: flex-end;
+}
+.chart-bar {
+  width: 8rpx;
+  border-radius: 2rpx;
+  background-color: #ff5c9d;
+}
+.chart-bar-1 {
+  height: 16rpx;
+  margin-right: 6rpx;
+}
+.chart-bar-2 {
+  height: 24rpx;
+  margin-right: 6rpx;
+}
+.chart-bar-3 {
+  height: 32rpx;
+}
+
+/* ---- 星标图标（clip-path 不可用：两个正方形错位 45° 叠成八角星） ---- */
+.star-shape {
+  position: relative;
+  width: 32rpx;
+  height: 32rpx;
+  flex-direction: row;
+}
+.star-part {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22rpx;
+  height: 22rpx;
+  margin-top: -11rpx;
+  margin-left: -11rpx;
+  background-color: #fbbf24;
+}
+.star-b {
+  transform: rotate(45deg);
+}
+
+/* ---- 齿轮图标 ---- */
+.gear-circle {
+  width: 28rpx;
+  height: 28rpx;
+  border-width: 4rpx;
+  border-style: solid;
+  border-color: #7b5cff;
+  border-radius: 50%;
+}
+.gear-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8rpx;
+  height: 8rpx;
+  margin: -4rpx 0 0 -4rpx;
+  border-radius: 50%;
+  background-color: #7b5cff;
+}
+</style>

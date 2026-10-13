@@ -1,0 +1,359 @@
+<template>
+<view class="input-row" :style="inputFocused ? rowFocusedStyle : {}">
+  <view class="icon-badge">
+    <view class="ic-user" v-if="props.icon === 'user'">
+      <view class="ic-user-head" />
+      <view class="ic-user-body" />
+    </view>
+    <view class="ic-smile" v-if="props.icon === 'smile'">
+      <view class="smile-face" />
+      <view class="smile-eye smile-eye-l" />
+      <view class="smile-eye smile-eye-r" />
+      <view class="smile-mouth" />
+    </view>
+    <view class="ic-lock" v-if="props.icon === 'lock'">
+      <view class="ic-lock-shackle" />
+      <view class="ic-lock-body">
+        <view class="ic-lock-hole" />
+      </view>
+    </view>
+    <view class="ic-shield" v-if="props.icon === 'shield'">
+      <view class="shield-box" />
+      <view class="shield-check" />
+    </view>
+    <view class="ic-mail" v-if="props.icon === 'mail'">
+      <view class="mail-body" />
+      <view class="mail-flap" />
+    </view>
+    <view class="ic-key" v-if="props.icon === 'key'">
+      <view class="key-ring" />
+      <view class="key-shaft" />
+      <view class="key-tooth" />
+    </view>
+  </view>
+  <input
+    v-model="vModel"
+    class="input"
+    type="text"
+    :password="props.type === 'password' && !showPwd"
+    :placeholder="props.placeholder"
+    placeholder-style="color: rgba(255, 255, 255, 0.35)"
+    @focus="inputFocused = true"
+    @blur="inputFocused = false"
+  />
+  <view class="eye-btn" hover-class="eye-hover" :hover-stay-time="80" @tap="showPwd = !showPwd" v-if="props.type === 'password'">
+    <view class="ic-eye">
+      <view class="ic-eye-outline" />
+      <view class="ic-eye-pupil" :style="{ opacity: showPwd ? 0.25 : 1 }" />
+      <view v-if="showPwd" class="ic-eye-slash" />
+    </view>
+  </view>
+</view>
+</template>
+
+<script setup lang="ts">
+import { ref, } from 'vue';
+
+const props = defineProps<{
+  type: string
+  placeholder: string
+  icon: string
+}>();
+
+const vModel = defineModel();
+
+// 输入聚焦（聚焦态由内联样式切换：原聚焦动画已删除，改为静态边框变色）
+const inputFocused = ref<boolean>(false);
+// 显示密码
+const showPwd = ref(false);
+
+// 聚焦态样式（对应原 focused 状态）
+const rowFocusedStyle = {
+  borderColor: 'rgba(167, 110, 255, 0.9)',
+  backgroundColor: 'rgba(255, 255, 255, 0.12)'
+};
+</script>
+
+<style lang="scss">
+/* nvue 样式全局生效（forgot 页验证码输入行复用 input-row/icon-badge/ic-key/input 等类名） */
+
+/* ---- 输入行 ---- */
+.input-row {
+  flex-direction: row;
+  align-items: center;
+  height: 100rpx;
+  padding: 0 30rpx;
+  margin-bottom: 30rpx;
+  border-radius: 26rpx;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-width: 1rpx;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ---- 输入框图标底座 ---- */
+.icon-badge {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 60rpx;
+  height: 60rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+  border-radius: 16rpx;
+  background-image: $icon-badge-gradient;
+  border-width: 1rpx;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* ---- 用户图标 ---- */
+.ic-user {
+  flex-direction: column;
+  align-items: center;
+  width: 30rpx;
+  height: 30rpx;
+}
+.ic-user-head {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background-color: #ffffff;
+}
+.ic-user-body {
+  width: 24rpx;
+  height: 13rpx;
+  margin-top: 3rpx;
+  border-top-left-radius: 12rpx;
+  border-top-right-radius: 12rpx;
+  border-bottom-left-radius: 5rpx;
+  border-bottom-right-radius: 5rpx;
+  background-color: #ffffff;
+}
+
+/* ---- 昵称图标 ---- */
+.ic-smile {
+  position: relative;
+  flex-direction: column;
+  width: 30rpx;
+  height: 30rpx;
+}
+.smile-face {
+  width: 30rpx;
+  height: 30rpx;
+  border-width: 3rpx;
+  border-style: solid;
+  border-color: #ffffff;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.smile-eye {
+  position: absolute;
+  top: 9rpx;
+  width: 4rpx;
+  height: 4rpx;
+  border-radius: 50%;
+  background-color: #ffffff;
+}
+.smile-eye-l {
+  left: 8rpx;
+}
+.smile-eye-r {
+  right: 8rpx;
+}
+.smile-mouth {
+  position: absolute;
+  bottom: 6rpx;
+  left: 9rpx;
+  width: 12rpx;
+  height: 7rpx;
+  box-sizing: border-box;
+  border-left-width: 3rpx;
+  border-left-style: solid;
+  border-left-color: #ffffff;
+  border-right-width: 3rpx;
+  border-right-style: solid;
+  border-right-color: #ffffff;
+  border-bottom-width: 3rpx;
+  border-bottom-style: solid;
+  border-bottom-color: #ffffff;
+  border-bottom-left-radius: 14rpx;
+  border-bottom-right-radius: 14rpx;
+}
+
+/* ---- 锁图标（锁环 + 锁体 + 锁孔） ---- */
+.ic-lock {
+  flex-direction: column;
+  align-items: center;
+  width: 28rpx;
+  height: 32rpx;
+}
+.ic-lock-shackle {
+  box-sizing: border-box;
+  width: 16rpx;
+  height: 13rpx;
+  border-width: 4rpx;
+  border-style: solid;
+  border-color: #ffffff;
+  border-bottom-width: 0;
+  border-top-left-radius: 10rpx;
+  border-top-right-radius: 10rpx;
+}
+.ic-lock-body {
+  position: relative;
+  width: 26rpx;
+  height: 18rpx;
+  border-radius: 5rpx;
+  background-color: #ffffff;
+}
+.ic-lock-hole {
+  position: absolute;
+  top: 4rpx;
+  left: 10rpx;
+  width: 6rpx;
+  height: 9rpx;
+  border-radius: 3rpx;
+  background-color: $dark-purple-base;
+}
+
+/* ---- 确认密码图标（盾牌勾选） ---- */
+.ic-shield {
+  position: relative;
+  flex-direction: column;
+  width: 28rpx;
+  height: 28rpx;
+}
+.shield-box {
+  width: 28rpx;
+  height: 28rpx;
+  border-width: 3rpx;
+  border-style: solid;
+  border-color: #ffffff;
+  border-radius: 9rpx;
+  box-sizing: border-box;
+}
+.shield-check {
+  position: absolute;
+  top: 8rpx;
+  left: 8rpx;
+  width: 12rpx;
+  height: 7rpx;
+  border-left-width: 3rpx;
+  border-left-style: solid;
+  border-left-color: #ffffff;
+  border-bottom-width: 3rpx;
+  border-bottom-style: solid;
+  border-bottom-color: #ffffff;
+  transform: rotate(-45deg);
+}
+
+/* ---- 邮箱图标（信封：原三角折盖改用旋转菱形近似） ---- */
+.ic-mail {
+  position: relative;
+  flex-direction: column;
+  width: 30rpx;
+  height: 22rpx;
+}
+.mail-body {
+  width: 30rpx;
+  height: 22rpx;
+  border-radius: 4rpx;
+  background-color: #ffffff;
+}
+.mail-flap {
+  position: absolute;
+  top: 3rpx;
+  left: 8rpx;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 2rpx;
+  background-color: rgba($dark-purple, 0.55);
+  transform: rotate(45deg);
+}
+
+/* ---- 验证码图标（钥匙：环 + 杆 + 齿） ---- */
+.ic-key {
+  position: relative;
+  flex-direction: column;
+  width: 30rpx;
+  height: 14rpx;
+}
+.key-ring {
+  box-sizing: border-box;
+  width: 14rpx;
+  height: 14rpx;
+  border-width: 3rpx;
+  border-style: solid;
+  border-color: #ffffff;
+  border-radius: 50%;
+}
+.key-shaft {
+  position: absolute;
+  top: 5rpx;
+  left: 13rpx;
+  width: 14rpx;
+  height: 4rpx;
+  background-color: #ffffff;
+}
+.key-tooth {
+  position: absolute;
+  top: 9rpx;
+  right: 1rpx;
+  width: 4rpx;
+  height: 6rpx;
+  background-color: #ffffff;
+}
+
+/* ---- 眼睛图标（轮廓 + 瞳孔 + 斜杠，斜杠改 v-if 显隐） ---- */
+.eye-btn {
+  flex-direction: column;
+  padding: 10rpx;
+}
+.eye-hover {
+  opacity: 0.6;
+  transform: scale(0.9);
+}
+.ic-eye {
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  width: 36rpx;
+  height: 24rpx;
+}
+.ic-eye-outline {
+  box-sizing: border-box;
+  width: 34rpx;
+  height: 22rpx;
+  margin-top: 1rpx;
+  border-width: 3rpx;
+  border-style: solid;
+  border-color: $white-90;
+  border-radius: 50%;
+}
+.ic-eye-pupil {
+  position: absolute;
+  top: 7rpx;
+  left: 13rpx;
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background-color: #ffffff;
+}
+.ic-eye-slash {
+  position: absolute;
+  top: -3rpx;
+  left: 16rpx;
+  width: 4rpx;
+  height: 30rpx;
+  border-radius: 2rpx;
+  background-color: $brand-pink;
+  transform: rotate(40deg);
+}
+
+.input {
+  flex: 1;
+  height: 100rpx;
+  font-size: 30rpx;
+  color: #ffffff;
+}
+</style>

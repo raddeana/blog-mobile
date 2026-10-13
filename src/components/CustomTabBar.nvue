@@ -1,0 +1,259 @@
+<template>
+  <view class="tabbar" :style="{ paddingBottom: safeBottom + 'px' }">
+    <view
+      v-for="tab in tabs"
+      :key="tab.path"
+      class="tab-item"
+      hover-class="tab-hover"
+      :hover-stay-time="80"
+      @tap="switchTab(tab)"
+    >
+      <!-- 首页：房子图标 -->
+      <view class="ic-home" v-if="tab.icon === 'home'">
+        <view class="home-roof" :style="{ borderBottomColor: iconColor(tab.path) }" />
+        <view class="home-body" :style="{ borderColor: iconColor(tab.path) }" />
+        <view class="home-door" :style="{ borderColor: iconColor(tab.path) }" />
+      </view>
+      <!-- 内容管理：文档+笔 -->
+      <view class="ic-content" v-if="tab.icon === 'content'">
+        <view class="ct-doc" :style="{ borderColor: iconColor(tab.path) }" />
+        <view class="ct-line ct-line-1" :style="{ backgroundColor: iconColor(tab.path) }" />
+        <view class="ct-line ct-line-2" :style="{ backgroundColor: iconColor(tab.path) }" />
+        <view class="ct-pencil" :style="{ backgroundColor: iconColor(tab.path) }" />
+        <view class="ct-tip" :style="{ borderTopColor: iconColor(tab.path) }" />
+      </view>
+      <!-- 我的：人形图标 -->
+      <view class="ic-profile" v-if="tab.icon === 'profile'">
+        <view class="pf-head" :style="{ borderColor: iconColor(tab.path) }" />
+        <view class="pf-body" :style="{ borderColor: iconColor(tab.path) }" />
+      </view>
+      <text class="tab-label" :style="labelStyle(tab.path)">{{ tab.label }}</text>
+    </view>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+
+const props = defineProps<{
+  current: string
+}>()
+
+const emit = defineEmits(['change'])
+
+const tabs = ref([
+  { path: '/pages/index/index', label: '首页', icon: 'home' },
+  { path: '/pages/content/content', label: '管理', icon: 'content' },
+  { path: '/pages/profile/profile', label: '我的', icon: 'profile' },
+])
+
+// nvue 无后代/复合状态选择器，图标与文字颜色全部数据驱动
+const iconColor = (path: string) => (props.current === path ? '#7b5cff' : '#ccc')
+const labelStyle = (path: string) =>
+  props.current === path ? { color: '#7b5cff', fontWeight: '600' } : { color: '#999999' }
+
+// 底部安全区：原 env(safe-area-inset-bottom) 改为 JS 计算
+const sys = uni.getSystemInfoSync()
+const safeBottom = sys.safeAreaInsets?.bottom || 0
+
+function switchTab(tab: { path: string; label: string; icon: string }) {
+  if (props.current === tab.path) return
+  emit('change', tab.path)
+  uni.redirectTo({ url: tab.path })
+}
+</script>
+
+<style lang="scss">
+/* nvue 样式全局生效，类名已避免与页面冲突 */
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  /* nvue box-sizing 默认 border-box：固定 height 会与安全区 paddingBottom 相互挤压，
+     高度改由 tab-item（50px）撑出，总高 = 50px + 安全区，与页面底部预留一致 */
+  background-color: rgba(255, 255, 255, 0.95);
+  border-top-width: 1rpx;
+  border-top-style: solid;
+  border-top-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.04);
+}
+
+.tab-item {
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+}
+
+.tab-hover {
+  opacity: 0.7;
+}
+
+.tab-label {
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: #999999;
+}
+
+/* ---- 首页图标：房子（屋顶+墙体+门） ---- */
+.ic-home {
+  position: relative;
+  width: 40rpx;
+  height: 40rpx;
+  flex-direction: row;
+}
+.home-roof {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 0;
+  margin-left: -20rpx;
+  border-left-width: 20rpx;
+  border-left-style: solid;
+  border-left-color: transparent;
+  border-right-width: 20rpx;
+  border-right-style: solid;
+  border-right-color: transparent;
+  border-bottom-width: 16rpx;
+  border-bottom-style: solid;
+  border-bottom-color: #ccc;
+}
+.home-body {
+  position: absolute;
+  bottom: 0;
+  left: 6rpx;
+  width: 28rpx;
+  height: 24rpx;
+  border-width: 4rpx;
+  border-style: solid;
+  border-color: #ccc;
+  border-radius: 4rpx;
+}
+.home-door {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 10rpx;
+  height: 12rpx;
+  margin-left: -5rpx;
+  border-top-width: 3rpx;
+  border-top-style: solid;
+  border-top-color: #ccc;
+  border-left-width: 3rpx;
+  border-left-style: solid;
+  border-left-color: #ccc;
+  border-right-width: 3rpx;
+  border-right-style: solid;
+  border-right-color: #ccc;
+  border-top-left-radius: 5rpx;
+  border-top-right-radius: 5rpx;
+}
+
+/* ---- 内容管理图标：文档（边框矩形+文字线）+ 笔（旋转矩形+三角尖） ---- */
+.ic-content {
+  position: relative;
+  width: 40rpx;
+  height: 40rpx;
+  flex-direction: row;
+}
+.ct-doc {
+  position: absolute;
+  top: 4rpx;
+  left: 4rpx;
+  width: 24rpx;
+  height: 28rpx;
+  border-width: 3rpx;
+  border-style: solid;
+  border-color: #ccc;
+  border-radius: 4rpx;
+}
+.ct-line {
+  position: absolute;
+  left: 9rpx;
+  width: 14rpx;
+  height: 2rpx;
+  background-color: #ccc;
+}
+.ct-line-1 {
+  top: 11rpx;
+}
+.ct-line-2 {
+  top: 17rpx;
+  width: 10rpx;
+}
+.ct-pencil {
+  position: absolute;
+  bottom: 2rpx;
+  right: 3rpx;
+  width: 4rpx;
+  height: 16rpx;
+  background-color: #ccc;
+  transform: rotate(45deg);
+  transform-origin: bottom center;
+  border-radius: 2rpx;
+}
+.ct-tip {
+  position: absolute;
+  bottom: 0;
+  right: 1rpx;
+  width: 0;
+  height: 0;
+  border-left-width: 4rpx;
+  border-left-style: solid;
+  border-left-color: transparent;
+  border-right-width: 4rpx;
+  border-right-style: solid;
+  border-right-color: transparent;
+  border-top-width: 6rpx;
+  border-top-style: solid;
+  border-top-color: #ccc;
+  transform: rotate(45deg);
+  transform-origin: top center;
+}
+
+/* ---- 我的图标：人形（头+身） ---- */
+.ic-profile {
+  position: relative;
+  width: 40rpx;
+  height: 40rpx;
+  flex-direction: row;
+}
+.pf-head {
+  position: absolute;
+  top: 2rpx;
+  left: 50%;
+  width: 16rpx;
+  height: 16rpx;
+  margin-left: -8rpx;
+  border-radius: 50%;
+  border-width: 4rpx;
+  border-style: solid;
+  border-color: #ccc;
+}
+.pf-body {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 28rpx;
+  height: 16rpx;
+  margin-left: -14rpx;
+  border-top-width: 4rpx;
+  border-top-style: solid;
+  border-top-color: #ccc;
+  border-left-width: 4rpx;
+  border-left-style: solid;
+  border-left-color: #ccc;
+  border-right-width: 4rpx;
+  border-right-style: solid;
+  border-right-color: #ccc;
+  border-top-left-radius: 14rpx;
+  border-top-right-radius: 14rpx;
+}
+</style>

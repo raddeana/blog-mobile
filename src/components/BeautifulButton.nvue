@@ -1,0 +1,57 @@
+<template>
+    <view class="btn-wrap">
+        <view
+            class="btn-login"
+            hover-class="btn-hover"
+            :hover-stay-time="80"
+            @tap="onBtnTap"
+        >
+            <!-- 文案由页面通过 #text 插槽传入（需自带 text 元素与 btn-text 类名） -->
+            <slot name="text">
+                <text class="btn-text">确定</text>
+            </slot>
+        </view>
+    </view>
+</template>
+
+<script setup lang="ts">
+const emits = defineEmits(['tap']);
+
+/**
+ * 点击按钮
+ * （原点击粒子爆发、循环流光、过冲回弹动画按 nvue 规则移除，仅保留 tap 事件与按压缩放）
+ */
+function onBtnTap() {
+    emits('tap');
+}
+</script>
+
+<style lang="scss">
+/* nvue 样式全局生效，类名已避免与页面冲突 */
+.btn-wrap {
+    position: relative;
+    flex-direction: column;
+    margin-top: 44rpx;
+}
+.btn-login {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    height: 100rpx;
+    border-radius: 50rpx;
+    background-image: $button-gradient;
+    box-shadow: 0 16rpx 40rpx rgba($focus-ring, 0.45);
+}
+.btn-hover {
+    transform: scale(0.97);
+    opacity: 0.9;
+}
+.btn-text {
+    color: #ffffff;
+    font-size: 32rpx;
+    font-weight: 600;
+    letter-spacing: 12rpx;
+}
+</style>

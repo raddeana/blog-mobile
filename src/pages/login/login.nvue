@@ -1,0 +1,479 @@
+<template>
+  <view class="page" :style="pageStyle">
+    <beautiful-background />
+
+    <scroll-view class="body-scroll" scroll-y :style="{ flex: 1 }">
+      <view class="content">
+        <!-- Logo -->
+        <view class="logo-wrap">
+          <!-- 头像：有图且加载成功显示图片；为空/加载中/失败时回退默认头像 -->
+          <view v-if="!avatarUrl || avatarFailed || !avatarLoaded" class="avatar-default">
+            <view class="avatar-head" />
+            <view class="avatar-body" />
+          </view>
+          <image
+            v-if="avatarUrl && !avatarFailed"
+            class="avatar-img"
+            :src="avatarUrl"
+            mode="aspectFill"
+            @load="avatarLoaded = true"
+            @error="avatarFailed = true"
+          />
+        </view>
+
+        <text class="title">欢迎回来</text>
+        <text class="subtitle">登录博客单，遇见更多精彩</text>
+
+        <!-- 表单卡片 -->
+        <view class="card">
+          <beautiful-input v-model="form.username" type="text" icon="user" placeholder="请输入账号 / 邮箱" />
+          <beautiful-input v-model="form.password" type="password" icon="lock" placeholder="请输入密码" />
+          <view class="row-between">
+            <view class="check" @tap="remember = !remember">
+              <view class="checkbox" :style="remember ? checkedStyle : {}">
+                <text v-if="remember" class="check-mark">✓</text>
+              </view>
+              <text class="check-text">记住我</text>
+            </view>
+            <text class="link" @tap="onForgot">忘记密码？</text>
+          </view>
+
+          <beautiful-button @tap="onLogin">
+            <template #text><text class="btn-text">登录</text></template>
+          </beautiful-button>
+
+          <view class="register-row">
+            <text class="gray-text">还没有账号？</text>
+            <text class="link register-link" @tap="onRegister">立即注册</text>
+          </view>
+        </view>
+
+        <!-- 其他登录方式 -->
+        <view class="divider">
+          <view class="line" />
+          <text class="divider-text">其他登录方式</text>
+          <view class="line line-r" />
+        </view>
+
+        <view class="social-row">
+          <view class="social-btn" hover-class="social-hover" @tap="onSocial('微信登录')">
+            <view class="social-icon icon-wechat-bg">
+              <view class="wc-bubble">
+                <view class="wc-eye wc-eye-l" />
+                <view class="wc-eye wc-eye-r" />
+                <view class="wc-tail" />
+              </view>
+            </view>
+            <text class="social-label">微信</text>
+          </view>
+          <view class="social-btn social-gap" hover-class="social-hover" @tap="onSocial('手机验证码登录')">
+            <view class="social-icon icon-phone-bg">
+              <view class="ph-body">
+                <view class="ph-speaker" />
+                <view class="ph-dot" />
+              </view>
+            </view>
+            <text class="social-label">手机</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 协议（底部安全区由内联 paddingBottom 注入） -->
+    <view class="agreement" :style="{ paddingBottom: safeBottom + 15 + 'px' }">
+      <view class="agree-check" @tap="agree = !agree">
+        <view class="agree-checkbox" :style="agree ? checkedStyle : {}">
+          <text v-if="agree" class="check-mark">✓</text>
+        </view>
+      </view>
+      <view class="agreement-text">
+        <text class="agree-text">我已阅读并同意</text>
+        <text class="agree-text agree-link">《用户协议》</text>
+        <text class="agree-text">和</text>
+        <text class="agree-text agree-link">《隐私政策》</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { reactive, ref, watch } from 'vue';
+
+// 组件（nvue 页面引用同名 nvue 组件，import 不带扩展名）
+import BeautifulBackground from '@/components/BeautifulBackground';
+import BeautifulButton from '@/components/BeautifulButton';
+import BeautifulInput from '@/components/BeautifulInput';
+
+// 状态栏 / 底部安全区：原 CSS 状态栏与安全区占位改为 JS 计算
+const sys = uni.getSystemInfoSync()
+const statusBarHeight = sys.statusBarHeight || 0
+const safeBottom = sys.safeAreaInsets?.bottom || 0
+
+const pageStyle = { paddingTop: statusBarHeight + 'px' }
+// 勾选态（nvue 无复合状态选择器，改为内联样式切换）
+const checkedStyle = {
+  backgroundImage: 'linear-gradient(135deg, #7b5cff, #ff5c9d)',
+  borderColor: 'rgba(0, 0, 0, 0)'
+}
+
+const form = reactive({ username: '', password: '' });
+/** 用户头像：接入接口后赋值；为空、加载中或加载失败时显示默认头像 */
+const avatarUrl = ref('');
+const avatarLoaded = ref(false);
+const avatarFailed = ref(false);
+
+watch(avatarUrl, () => {
+  avatarLoaded.value = false
+  avatarFailed.value = false
+});
+
+const remember = ref(false)
+const agree = ref(false)
+const loading = ref(false)
+
+function onForgot() {
+  uni.navigateTo({ url: '/pages/forgot/forgot' })
+}
+
+function onRegister() {
+  uni.navigateTo({ url: '/pages/register/register' })
+}
+
+function onSocial(name: string) {
+  uni.showToast({ title: name + '开发中', icon: 'none' })
+}
+
+function onLogin() {
+  if (!form.username.trim()) {
+    uni.showToast({ title: '请输入账号', icon: 'none' })
+    return
+  }
+  if (!form.password) {
+    uni.showToast({ title: '请输入密码', icon: 'none' })
+    return
+  }
+  if (!agree.value) {
+    uni.showToast({ title: '请先阅读并同意相关协议', icon: 'none' })
+    return
+  }
+  if (loading.value) return
+
+  loading.value = true
+  uni.showLoading({ title: '登录中...', mask: true })
+  // TODO: 替换为真实登录接口
+  setTimeout(() => {
+    uni.hideLoading()
+    loading.value = false
+    if (remember.value) {
+      uni.setStorageSync('username', form.username)
+    }
+    uni.showToast({ title: '登录成功', icon: 'success' })
+    setTimeout(() => {
+      uni.reLaunch({ url: '/pages/index/index' })
+    }, 600)
+  }, 1200)
+}
+</script>
+
+<style lang="scss">
+/* nvue 样式全局生效；页面根节点高度由 flex 撑满，状态栏高度由 pageStyle 注入 */
+.page {
+  flex: 1;
+  flex-direction: column;
+  background-color: #12062b;
+  background-image: linear-gradient(160deg, #20124d 0%, #14082f 40%, #2a0a3d 75%, #12062b 100%);
+}
+.body-scroll {
+  flex: 1;
+}
+
+/* ---- 主体 ---- */
+.content {
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 48rpx 0;
+}
+
+/* Logo 头像：渐变描边圆环 */
+.logo-wrap {
+  width: 168rpx;
+  height: 168rpx;
+  border-radius: 50%;
+  padding: 6rpx;
+  margin-top: 40rpx;
+  flex-direction: column;
+  background-image: linear-gradient(135deg, $brand-purple, $brand-pink);
+  box-shadow: 0 12rpx 48rpx rgba($brand-purple, 0.55);
+}
+/* 默认头像：渐变底座 + 人形剪影 */
+.avatar-default {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-image: $avatar-gradient;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+/* 用户头像图片（加载成功后覆盖默认头像） */
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+.avatar-head {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.96);
+}
+.avatar-body {
+  width: 116rpx;
+  height: 50rpx;
+  margin-top: 8rpx;
+  border-top-left-radius: 58rpx;
+  border-top-right-radius: 58rpx;
+  background-color: rgba(255, 255, 255, 0.96);
+}
+
+.title {
+  margin-top: 36rpx;
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 4rpx;
+  /* 原渐变文字（背景裁切到文字）nvue 不支持，改为纯色 */
+}
+.subtitle {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 2rpx;
+}
+
+/* ---- 卡片 ---- */
+.card {
+  width: 100%;
+  margin-top: 56rpx;
+  padding: 48rpx 40rpx;
+  background-color: rgba(255, 255, 255, 0.07);
+  border-width: 1rpx;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.14);
+  border-radius: 36rpx;
+  box-shadow: 0 24rpx 60rpx rgba(0, 0, 0, 0.35);
+}
+
+/* ---- 记住我 / 忘记密码 ---- */
+.row-between {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin: 6rpx 4rpx 0;
+}
+.check {
+  flex-direction: row;
+  align-items: center;
+}
+.checkbox {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 12rpx;
+  border-radius: 10rpx;
+  border-width: 2rpx;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.check-mark {
+  font-size: 22rpx;
+  color: #ffffff;
+}
+.check-text {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.6);
+}
+.link {
+  font-size: 26rpx;
+  color: $brand-light-purple;
+}
+
+/* ---- 注册入口 ---- */
+.register-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-top: 36rpx;
+}
+.register-link {
+  margin-left: 8rpx;
+}
+.gray-text {
+  font-size: 26rpx;
+  color: $white-50;
+}
+
+/* ---- 其他登录方式 ---- */
+.divider {
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  margin-top: 56rpx;
+}
+.line {
+  flex: 1;
+  height: 1rpx;
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.25));
+}
+.line-r {
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0));
+}
+.divider-text {
+  margin-left: 24rpx;
+  margin-right: 24rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.social-row {
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+  margin-top: 44rpx;
+}
+.social-btn {
+  flex-direction: column;
+  align-items: center;
+}
+.social-gap {
+  margin-left: 160rpx;
+}
+.social-icon {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 50%;
+}
+.icon-wechat-bg {
+  background-image: linear-gradient(135deg, #2ee56b 0%, #07c160 100%);
+  box-shadow: 0 10rpx 28rpx rgba(7, 193, 96, 0.35);
+}
+.icon-phone-bg {
+  background-image: linear-gradient(135deg, #4f8cff 0%, $brand-purple 100%);
+  box-shadow: 0 10rpx 28rpx rgba(96, 116, 255, 0.35);
+}
+.social-hover {
+  transform: scale(0.92);
+  opacity: 0.85;
+}
+.social-label {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* ---- 微信图标（气泡 + 双眼 + 尾巴，尾巴由伪元素改为真实子元素） ---- */
+.wc-bubble {
+  position: relative;
+  flex-direction: column;
+  width: 50rpx;
+  height: 40rpx;
+  background-color: #ffffff;
+  border-radius: 50%;
+}
+.wc-tail {
+  position: absolute;
+  left: 7rpx;
+  bottom: -5rpx;
+  width: 14rpx;
+  height: 14rpx;
+  background-color: #ffffff;
+  border-radius: 3rpx;
+  transform: rotate(25deg);
+}
+.wc-eye {
+  position: absolute;
+  top: 13rpx;
+  width: 7rpx;
+  height: 11rpx;
+  border-radius: 50%;
+  background-color: #07c160;
+}
+.wc-eye-l {
+  left: 14rpx;
+}
+.wc-eye-r {
+  right: 14rpx;
+}
+
+/* ---- 手机图标（机身 + 听筒 + 按键，听筒由伪元素改为真实子元素） ---- */
+.ph-body {
+  position: relative;
+  flex-direction: column;
+  width: 38rpx;
+  height: 54rpx;
+  border-width: 4rpx;
+  border-style: solid;
+  border-color: #ffffff;
+  border-radius: 8rpx;
+}
+.ph-speaker {
+  position: absolute;
+  top: 6rpx;
+  left: 13rpx;
+  width: 12rpx;
+  height: 3rpx;
+  border-radius: 3rpx;
+  background-color: $white-90;
+}
+.ph-dot {
+  position: absolute;
+  bottom: 5rpx;
+  left: 15rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background-color: $white-90;
+}
+
+/* ---- 协议 ---- */
+.agreement {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 30rpx 40rpx;
+}
+.agree-check {
+  flex-direction: row;
+  align-items: center;
+}
+.agree-checkbox {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 10rpx;
+  border-radius: 10rpx;
+  border-width: 2rpx;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.agreement-text {
+  flex-direction: row;
+  align-items: center;
+}
+.agree-text {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.45);
+}
+.agree-link {
+  color: $brand-light-purple;
+}
+</style>

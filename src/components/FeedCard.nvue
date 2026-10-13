@@ -13,18 +13,18 @@
         <text class="time">{{ timeText }}</text>
       </view>
       <!-- 关注按钮 -->
-      <view class="follow-btn" hover-class="follow-hover" :hover-stay-time="80" @tap="$emit('follow', item.id)">
+      <view class="follow-btn" hover-class="follow-hover" :hover-stay-time="80" @click="$emit('follow', item.id)">
         <text class="follow-text">+ 关注</text>
       </view>
     </view>
 
     <!-- 内容区：文章 -->
     <template v-if="item.type === 'article'">
-      <view class="article-content" @tap="$emit('card-tap', item)">
+      <view class="article-content" @click="$emit('card-tap', item)">
         <text class="article-title">{{ item.title }}</text>
-        <text class="article-excerpt">{{ item.excerpt }}</text>
+        <text class="article-excerpt" :lines="2">{{ item.excerpt }}</text>
         <!-- 封面占位 -->
-        <view class="article-cover" :style="{ background: item.coverGradient }">
+        <view class="article-cover" :style="{ backgroundImage: item.coverGradient }">
           <view class="cover-icon" />
         </view>
         <!-- 标签 -->
@@ -47,10 +47,10 @@
             v-for="opt in item.options"
             :key="opt.id"
             class="poll-option"
-            :class="{ voted: selectedOption === opt.id }"
+            :class="{ 'poll-option-voted': selectedOption === opt.id }"
             hover-class="poll-option-hover"
             :hover-stay-time="80"
-            @tap="onVote(opt.id)"
+            @click="onVote(opt.id)"
           >
             <view class="poll-bar" :style="{ width: barWidth(opt.votes) + '%' }" />
             <text class="option-text">{{ opt.text }}</text>
@@ -63,23 +63,23 @@
 
     <!-- 内容区：短信息 -->
     <template v-if="item.type === 'message'">
-      <view class="message-content" @tap="$emit('card-tap', item)">
-        <text class="message-text">{{ item.content }}</text>
+      <view class="message-content" @click="$emit('card-tap', item)">
+        <text class="message-text" :lines="5">{{ item.content }}</text>
       </view>
     </template>
 
     <!-- 互动栏 -->
     <view class="action-bar">
-      <view class="action-item" hover-class="action-hover" :hover-stay-time="80" @tap="onLike">
-        <view class="ic-heart" :class="{ liked: item.liked }">
-          <view class="heart-l" />
-          <view class="heart-r" />
-          <view class="heart-b" />
+      <view class="action-item" hover-class="action-hover" :hover-stay-time="80" @click="$emit('like', item)">
+        <view class="ic-heart">
+          <view class="heart-part heart-l" :style="item.liked ? heartFillStyle : {}" />
+          <view class="heart-part heart-r" :style="item.liked ? heartFillStyle : {}" />
+          <view class="heart-b" :style="item.liked ? heartFillStyle : {}" />
         </view>
-        <text class="action-text" :class="{ liked: item.liked }">{{ displayLikes }}</text>
+        <text class="action-text" :class="{ 'action-text-liked': item.liked }">{{ displayLikes }}</text>
       </view>
 
-      <view class="action-item" hover-class="action-hover" :hover-stay-time="80" @tap="$emit('comment', item)">
+      <view class="action-item" hover-class="action-hover" :hover-stay-time="80" @click="$emit('comment', item)">
         <view class="ic-comment">
           <view class="comment-body" />
           <view class="comment-tail" />
@@ -87,7 +87,7 @@
         <text class="action-text">{{ item.comments }}</text>
       </view>
 
-      <view class="action-item" hover-class="action-hover" :hover-stay-time="80" @tap="$emit('share', item)">
+      <view class="action-item" hover-class="action-hover" :hover-stay-time="80" @click="$emit('share', item)">
         <view class="ic-share">
           <view class="share-shaft" />
           <view class="share-head" />
@@ -114,6 +114,7 @@ defineEmits<{
 }>()
 
 const selectedOption = ref(0)
+const heartFillStyle = { backgroundColor: '#ff5c9d' }
 
 /* ---- 显示数据 ---- */
 const displayLikes = computed(() => props.item.likes + (props.item.liked ? 1 : 0))
@@ -146,11 +147,15 @@ function onVote(optionId: number) {
 
 <style lang="scss">
 .feed-card {
-  background: #ffffff;
+  background-color: #ffffff;
   border-radius: 24rpx;
   margin-bottom: 20rpx;
-  padding: 32rpx 28rpx;
+  padding-top: 32rpx;
+  padding-bottom: 32rpx;
+  padding-left: 28rpx;
+  padding-right: 28rpx;
   box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+  flex-direction: column;
 }
 
 /* ---- 用户信息 ---- */
@@ -163,16 +168,17 @@ function onVote(optionId: number) {
 .avatar-wrap {
   width: 80rpx;
   height: 80rpx;
-  border-radius: 50%;
+  border-radius: 40rpx;
   padding: 3rpx;
-  background: linear-gradient(135deg, #7b5cff, #ff5c9d);
+  background-image: linear-gradient(135deg, #7b5cff, #ff5c9d);
   flex-shrink: 0;
+  flex-direction: column;
 }
 .avatar-default {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
-  background: linear-gradient(160deg, #8f6bff 0%, #b750ff 55%, #ff5c9d 100%);
+  border-radius: 37rpx;
+  background-image: $avatar-gradient;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -182,15 +188,18 @@ function onVote(optionId: number) {
 .avatar-head {
   width: 26rpx;
   height: 26rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.96);
+  border-radius: 13rpx;
+  background-color: rgba(255, 255, 255, 0.96);
 }
 .avatar-body {
   width: 58rpx;
   height: 25rpx;
   margin-top: 4rpx;
-  border-radius: 29rpx 29rpx 0 0;
-  background: rgba(255, 255, 255, 0.96);
+  border-top-left-radius: 29rpx;
+  border-top-right-radius: 29rpx;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  background-color: rgba(255, 255, 255, 0.96);
 }
 .user-info {
   flex: 1;
@@ -209,10 +218,16 @@ function onVote(optionId: number) {
   margin-top: 4rpx;
 }
 .follow-btn {
-  padding: 10rpx 24rpx;
+  padding-top: 10rpx;
+  padding-bottom: 10rpx;
+  padding-left: 24rpx;
+  padding-right: 24rpx;
   border-radius: 30rpx;
-  background: linear-gradient(135deg, rgba(123, 92, 255, 0.1), rgba(255, 92, 157, 0.08));
-  border: 1rpx solid rgba(123, 92, 255, 0.3);
+  background-image: linear-gradient(135deg, rgba(123, 92, 255, 0.1), rgba(255, 92, 157, 0.08));
+  border-width: 1rpx;
+  border-style: solid;
+  border-color: rgba(123, 92, 255, 0.3);
+  flex-direction: row;
 }
 .follow-hover {
   transform: scale(0.95);
@@ -233,25 +248,22 @@ function onVote(optionId: number) {
   font-size: 32rpx;
   font-weight: 700;
   color: #1a1a1a;
-  line-height: 1.5;
+  line-height: 48rpx;
   margin-bottom: 12rpx;
 }
 .article-excerpt {
   font-size: 26rpx;
   color: #666;
-  line-height: 1.6;
+  line-height: 42rpx;
   margin-bottom: 20rpx;
-  overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
 }
 .article-cover {
   width: 100%;
   height: 320rpx;
   border-radius: 16rpx;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   margin-bottom: 16rpx;
@@ -259,9 +271,11 @@ function onVote(optionId: number) {
 .cover-icon {
   width: 60rpx;
   height: 60rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-  border: 4rpx solid rgba(255, 255, 255, 0.4);
+  border-radius: 30rpx;
+  background-color: rgba(255, 255, 255, 0.25);
+  border-width: 4rpx;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 .tag-row {
   display: flex;
@@ -281,10 +295,14 @@ function onVote(optionId: number) {
   flex-direction: column;
 }
 .poll-badge {
-  display: inline-flex;
-  padding: 6rpx 16rpx;
+  display: flex;
+  flex-direction: row;
+  padding-top: 6rpx;
+  padding-bottom: 6rpx;
+  padding-left: 16rpx;
+  padding-right: 16rpx;
   border-radius: 8rpx;
-  background: linear-gradient(135deg, #7b5cff, #ff5c9d);
+  background-image: linear-gradient(135deg, #7b5cff, #ff5c9d);
   align-self: flex-start;
   margin-bottom: 16rpx;
 }
@@ -297,7 +315,7 @@ function onVote(optionId: number) {
   font-size: 30rpx;
   font-weight: 600;
   color: #1a1a1a;
-  line-height: 1.5;
+  line-height: 45rpx;
   margin-bottom: 20rpx;
 }
 .poll-options {
@@ -313,13 +331,15 @@ function onVote(optionId: number) {
   margin-bottom: 12rpx;
   border-radius: 12rpx;
   overflow: hidden;
-  background: rgba(123, 92, 255, 0.06);
-  border: 1rpx solid rgba(123, 92, 255, 0.12);
+  background-color: rgba(123, 92, 255, 0.06);
+  border-width: 1rpx;
+  border-style: solid;
+  border-color: rgba(123, 92, 255, 0.12);
 }
 .poll-option-hover {
-  background: rgba(123, 92, 255, 0.12);
+  background-color: rgba(123, 92, 255, 0.12);
 }
-.poll-option.voted {
+.poll-option-voted {
   border-color: rgba(123, 92, 255, 0.5);
 }
 .poll-bar {
@@ -327,9 +347,8 @@ function onVote(optionId: number) {
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, rgba(123, 92, 255, 0.15), rgba(255, 92, 157, 0.1));
+  background-image: linear-gradient(90deg, rgba(123, 92, 255, 0.15), rgba(255, 92, 157, 0.1));
   border-radius: 12rpx;
-  transition: width 0.4s ease;
 }
 .option-text {
   position: relative;
@@ -361,12 +380,8 @@ function onVote(optionId: number) {
 .message-text {
   font-size: 28rpx;
   color: #333;
-  line-height: 1.7;
-  overflow: hidden;
+  line-height: 48rpx;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  -webkit-box-orient: vertical;
 }
 
 /* ---- 互动栏 ---- */
@@ -377,13 +392,15 @@ function onVote(optionId: number) {
   justify-content: space-around;
   margin-top: 28rpx;
   padding-top: 24rpx;
-  border-top: 1rpx solid rgba(0, 0, 0, 0.04);
+  border-top-width: 1rpx;
+  border-top-style: solid;
+  border-top-color: rgba(0, 0, 0, 0.04);
 }
 .action-item {
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 10rpx 20rpx;
+  padding: 10rpx;
 }
 .action-hover {
   opacity: 0.6;
@@ -393,7 +410,7 @@ function onVote(optionId: number) {
   color: #999;
   margin-left: 10rpx;
 }
-.action-text.liked {
+.action-text-liked {
   color: #ff5c9d;
   font-weight: 600;
 }
@@ -403,44 +420,32 @@ function onVote(optionId: number) {
   position: relative;
   width: 36rpx;
   height: 32rpx;
-
-  .heart-l,
-  .heart-r {
-    position: absolute;
-    top: 0;
-    width: 20rpx;
-    height: 20rpx;
-    border-radius: 50%;
-    background: #bbb;
-  }
-
-  .heart-l {
-    left: 0;
-  }
-
-  .heart-r {
-    right: 0;
-  }
-
-  /* top:7 → 方块中心 y=17，底部尖角 y≈31.14 不溢出 32rpx 容器 */
-  .heart-b {
-    position: absolute;
-    top: 7rpx;
-    left: 50%;
-    width: 20rpx;
-    height: 20rpx;
-    margin-left: -10rpx;
-    background: #bbb;
-    transform: rotate(45deg);
-  }
-
-  &.liked {
-    .heart-l,
-    .heart-r,
-    .heart-b {
-      background: #ff5c9d;
-    }
-  }
+  flex-direction: column;
+}
+.heart-part {
+  position: absolute;
+  top: 0;
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 10rpx;
+  background-color: #bbb;
+}
+.heart-l {
+  left: 0;
+}
+.heart-r {
+  right: 0;
+}
+/* top:7 → 方块中心 y=17，底部尖角 y≈31.14 不溢出 32rpx 容器 */
+.heart-b {
+  position: absolute;
+  top: 7rpx;
+  left: 50%;
+  width: 20rpx;
+  height: 20rpx;
+  margin-left: -10rpx;
+  background-color: #bbb;
+  transform: rotate(45deg);
 }
 
 /* ---- 评论图标（圆角气泡 + 下尖尾） ---- */
@@ -448,27 +453,36 @@ function onVote(optionId: number) {
   position: relative;
   width: 36rpx;
   height: 32rpx;
-
-  .comment-body {
-    width: 36rpx;
-    height: 22rpx;
-    border: 3rpx solid #bbb;
-    border-radius: 10rpx 10rpx 10rpx 4rpx;
-    box-sizing: border-box;
-    background: transparent;
-  }
-
-  /* top:19 对齐 body 底部边框（y=19~22），tail 向下延伸至 y=27 */
-  .comment-tail {
-    position: absolute;
-    top: 19rpx;
-    left: 8rpx;
-    width: 0;
-    height: 0;
-    border-left: 5rpx solid transparent;
-    border-right: 5rpx solid transparent;
-    border-top: 8rpx solid #bbb;
-  }
+  flex-direction: column;
+}
+.comment-body {
+  width: 36rpx;
+  height: 22rpx;
+  border-width: 3rpx;
+  border-style: solid;
+  border-color: #bbb;
+  border-top-left-radius: 10rpx;
+  border-top-right-radius: 10rpx;
+  border-bottom-right-radius: 10rpx;
+  border-bottom-left-radius: 4rpx;
+  background-color: transparent;
+}
+/* top:19 对齐 body 底部边框（y=19~22），tail 向下延伸至 y=27 */
+.comment-tail {
+  position: absolute;
+  top: 19rpx;
+  left: 8rpx;
+  width: 0;
+  height: 0;
+  border-left-width: 5rpx;
+  border-left-style: solid;
+  border-left-color: transparent;
+  border-right-width: 5rpx;
+  border-right-style: solid;
+  border-right-color: transparent;
+  border-top-width: 8rpx;
+  border-top-style: solid;
+  border-top-color: #bbb;
 }
 
 /* ---- 转发图标（水平线 + 右箭头头） ---- */
@@ -476,29 +490,31 @@ function onVote(optionId: number) {
   position: relative;
   width: 36rpx;
   height: 32rpx;
-
-  /* top:15 → 线中心 y=16.5 ≈ 容器中心 y=16 */
-  .share-shaft {
-    position: absolute;
-    top: 15rpx;
-    left: 0;
-    width: 22rpx;
-    height: 3rpx;
-    background: #bbb;
-    border-radius: 2rpx;
-  }
-
-  /* 12rpx 方块旋转后右尖 y≈35.5 不溢出；中心 y=16 与 shaft 对齐 */
-  .share-head {
-    position: absolute;
-    top: 10rpx;
-    right: 3rpx;
-    width: 12rpx;
-    height: 12rpx;
-    border-top: 3rpx solid #bbb;
-    border-right: 3rpx solid #bbb;
-    transform: rotate(45deg);
-    box-sizing: border-box;
-  }
+  flex-direction: column;
+}
+/* top:15 → 线中心 y=16.5 ≈ 容器中心 y=16 */
+.share-shaft {
+  position: absolute;
+  top: 15rpx;
+  left: 0;
+  width: 22rpx;
+  height: 3rpx;
+  background-color: #bbb;
+  border-radius: 2rpx;
+}
+/* 12rpx 方块旋转后右尖 y≈35.5 不溢出；中心 y=16 与 shaft 对齐 */
+.share-head {
+  position: absolute;
+  top: 10rpx;
+  right: 3rpx;
+  width: 12rpx;
+  height: 12rpx;
+  border-top-width: 3rpx;
+  border-top-style: solid;
+  border-top-color: #bbb;
+  border-right-width: 3rpx;
+  border-right-style: solid;
+  border-right-color: #bbb;
+  transform: rotate(45deg);
 }
 </style>

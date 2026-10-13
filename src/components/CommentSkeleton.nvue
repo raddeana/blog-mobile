@@ -1,0 +1,104 @@
+<template>
+  <!-- 评论列表骨架：nvue 不支持 @keyframes，呼吸效果由 JS 定时器驱动 opacity -->
+  <view class="sk-list">
+    <view v-for="n in count" :key="n" class="sk-crow">
+      <!-- 头像 -->
+      <view class="sk-b sk-cavatar" :style="blockStyle(n * 3)" />
+      <!-- 主体：昵称 + 正文行 + 时间 -->
+      <view class="sk-cbody">
+        <view class="sk-b sk-cname" :style="blockStyle(n * 3 + 1)" />
+        <view class="sk-b sk-ctext sk-ctext-1" :style="blockStyle(n * 3 + 2)" />
+        <view class="sk-b sk-ctext sk-ctext-2" :style="blockStyle(n * 3 + 3)" />
+        <view class="sk-b sk-cfoot" :style="blockStyle(n * 3 + 4)" />
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+
+withDefaults(defineProps<{ count?: number }>(), { count: 3 })
+
+/* ---- 呼吸动画：奇偶块交替明暗，850ms 翻转一次 ---- */
+const pulse = ref(false)
+let timer: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  timer = setInterval(() => {
+    pulse.value = !pulse.value
+  }, 850)
+})
+
+onBeforeUnmount(() => {
+  if (timer) clearInterval(timer)
+})
+
+function blockStyle(i: number) {
+  const bright = (i % 2 === 0) === pulse.value
+  return { opacity: bright ? 1 : 0.4 }
+}
+</script>
+
+<style lang="scss">
+.sk-list {
+  flex-direction: column;
+}
+
+/* ---- 评论行（与 comment-item 布局对齐） ---- */
+.sk-crow {
+  flex-direction: row;
+  align-items: flex-start;
+  padding-top: 24rpx;
+  padding-bottom: 24rpx;
+  padding-left: 8rpx;
+  padding-right: 8rpx;
+  border-bottom-width: 1rpx;
+  border-bottom-style: solid;
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+/* ---- 呼吸块基础类 ---- */
+.sk-b {
+  background-color: #ececf0;
+  border-radius: 8rpx;
+  transition-property: opacity;
+  transition-duration: 700ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* ---- 头像 ---- */
+.sk-cavatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  flex-shrink: 0;
+}
+
+/* ---- 主体 ---- */
+.sk-cbody {
+  flex: 1;
+  flex-direction: column;
+  margin-left: 20rpx;
+}
+.sk-cname {
+  width: 160rpx;
+  height: 24rpx;
+  margin-bottom: 12rpx;
+}
+.sk-ctext {
+  height: 24rpx;
+  margin-bottom: 10rpx;
+}
+.sk-ctext-1 {
+  width: 460rpx;
+}
+.sk-ctext-2 {
+  width: 300rpx;
+  margin-bottom: 16rpx;
+}
+.sk-cfoot {
+  width: 120rpx;
+  height: 20rpx;
+}
+</style>
