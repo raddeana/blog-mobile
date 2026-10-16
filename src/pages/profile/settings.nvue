@@ -1,0 +1,332 @@
+<template>
+  <view class="page">
+    <!-- 顶部导航栏 -->
+    <view class="topbar">
+      <view class="topbar-inner" :style="{ paddingTop: statusBarHeight + 8 + 'px' }">
+        <view class="back-btn" hover-class="back-hover" :hover-stay-time="80" @click="onBack">
+          <view class="back-arrow" />
+        </view>
+        <text class="topbar-title">设置</text>
+      </view>
+    </view>
+
+    <scroll-view scroll-y class="body-scroll">
+      <view class="content" :style="{ paddingTop: (statusBarHeight + 44) + 'px' }">
+        <!-- 头像 -->
+        <view class="card" hover-class="card-hover" :hover-stay-time="80" @click="onChooseAvatar">
+          <text class="field-label">头像</text>
+          <view class="avatar-wrap">
+            <image v-if="previewAvatar" :src="previewAvatar" class="avatar-img" mode="aspectFill" />
+            <view v-else class="avatar-default">
+              <view class="avatar-head" />
+              <view class="avatar-body" />
+            </view>
+          </view>
+          <text class="field-tip">{{ previewAvatar ? '点击更换' : '点击设置' }}</text>
+          <view class="flex-spacer" />
+          <view class="menu-arrow" />
+        </view>
+
+        <!-- 昵称 -->
+        <view class="card">
+          <text class="field-label">昵称</text>
+          <input
+            v-model="nickname"
+            class="nickname-input"
+            :maxlength="NICKNAME_MAX"
+            placeholder="请输入昵称"
+            placeholder-style="color: #c0c0c6"
+          />
+        </view>
+
+        <!-- 自我描述 -->
+        <view class="card card-bio">
+          <view class="bio-head">
+            <text class="field-label">自我描述</text>
+            <view class="flex-spacer" />
+            <text class="bio-count">{{ bio.length }}/{{ BIO_MAX }}</text>
+          </view>
+          <textarea
+            v-model="bio"
+            class="bio-input"
+            :maxlength="BIO_MAX"
+            placeholder="介绍一下自己吧"
+            placeholder-style="color: #c0c0c6"
+          />
+        </view>
+
+        <!-- 保存 -->
+        <view
+          class="save-btn"
+          hover-class="save-hover"
+          :hover-stay-time="80"
+          :class="{ 'save-btn-disabled': saving }"
+          @click="onSave"
+        >
+          <text class="save-text">{{ saving ? '保存中...' : '保存' }}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { fetchUserProfile, updateUserProfile, uploadAvatar } from '@/api/user'
+import { validateNickname, validateBio, NICKNAME_MAX, BIO_MAX } from '@/utils/user-logic'
+
+// 状态栏高度：nvue 下 CSS 状态栏变量不可用，改 JS 计算
+const sys = uni.getSystemInfoSync()
+const statusBarHeight = sys.statusBarHeight || 0
+
+const nickname = ref('')
+const bio = ref('')
+const avatarUrl = ref<string | null>(null) // 已保存头像
+const pendingAvatar = ref<string | null>(null) // 本次新选、待保存头像
+const saving = ref(false)
+
+const previewAvatar = computed(() => pendingAvatar.value ?? avatarUrl.value)
+
+onMounted(async () => {
+  const p = await fetchUserProfile()
+  nickname.value = p.nickname
+  bio.value = p.bio
+  avatarUrl.value = p.avatarUrl
+})
+
+function onBack() {
+  uni.navigateBack()
+}
+
+function onChooseAvatar() {
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    success: res => {
+      const path = res.tempFilePaths && res.tempFilePaths[0]
+      if (path) pendingAvatar.value = path
+    },
+  })
+}
+
+async function onSave() {
+  if (saving.value) return
+  const err = validateNickname(nickname.value) || validateBio(bio.value)
+  if (err) {
+    uni.showToast({ title: err, icon: 'none' })
+    return
+  }
+  saving.value = true
+  try {
+    // 新头像先 mock 上传再随资料一起提交
+    const url = pendingAvatar.value ? await uploadAvatar(pendingAvatar.value) : avatarUrl.value
+    await updateUserProfile({ nickname: nickname.value.trim(), bio: bio.value.trim(), avatarUrl: url })
+    uni.showToast({ title: '保存成功', icon: 'success' })
+    setTimeout(() => uni.navigateBack(), 600)
+  } catch {
+    uni.showToast({ title: '保存失败，请重试', icon: 'none' })
+  } finally {
+    saving.value = false
+  }
+}
+</script>
+
+<style lang="scss">
+/* nvue 样式全局生效；page{} 选择器不可用，页面背景写在根节点上 */
+.page {
+  flex: 1;
+  flex-direction: column;
+  background-color: #f5f5f7;
+}
+.body-scroll {
+  flex: 1;
+}
+.content {
+  flex-direction: column;
+  padding-bottom: 60rpx;
+}
+
+/* ---- 顶部导航栏 ---- */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: rgba(255, 255, 255, 0.96);
+  border-bottom-width: 1rpx;
+  border-bottom-style: solid;
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+.topbar-inner {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding-left: 24rpx;
+  padding-right: 24rpx;
+  padding-bottom: 16rpx;
+}
+.back-btn {
+  padding: 10rpx;
+  flex-direction: column;
+}
+.back-hover {
+  opacity: 0.6;
+}
+.back-arrow {
+  width: 20rpx;
+  height: 20rpx;
+  border-left-width: 4rpx;
+  border-left-style: solid;
+  border-left-color: #333;
+  border-bottom-width: 4rpx;
+  border-bottom-style: solid;
+  border-bottom-color: #333;
+  transform: rotate(45deg);
+}
+.topbar-title {
+  flex: 1;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-left: 8rpx;
+}
+
+/* ---- 卡片 ---- */
+.card {
+  flex-direction: row;
+  align-items: center;
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  margin-top: 24rpx;
+  margin-left: 24rpx;
+  margin-right: 24rpx;
+  padding: 28rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+.card-hover {
+  background-color: #fafaff;
+}
+.card-bio {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.field-label {
+  width: 140rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333333;
+}
+.field-tip {
+  margin-left: 20rpx;
+  font-size: 26rpx;
+  color: #999999;
+}
+.flex-spacer {
+  flex: 1;
+}
+.menu-arrow {
+  width: 16rpx;
+  height: 16rpx;
+  border-top-width: 3rpx;
+  border-top-style: solid;
+  border-top-color: #ccc;
+  border-right-width: 3rpx;
+  border-right-style: solid;
+  border-right-color: #ccc;
+  transform: rotate(45deg);
+}
+
+/* ---- 头像（默认 CSS 绘制，选中后展示图片） ---- */
+.avatar-wrap {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  padding: 4rpx;
+  background-image: linear-gradient(135deg, #7b5cff, #ff5c9d);
+}
+.avatar-img {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 50%;
+}
+.avatar-default {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-image: linear-gradient(160deg, #8f6bff 0%, #b750ff 55%, #ff5c9d 100%);
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+.avatar-head {
+  width: 30rpx;
+  height: 30rpx;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.96);
+}
+.avatar-body {
+  width: 66rpx;
+  height: 30rpx;
+  margin-top: 4rpx;
+  border-top-left-radius: 34rpx;
+  border-top-right-radius: 34rpx;
+  background-color: rgba(255, 255, 255, 0.96);
+}
+
+/* ---- 昵称输入 ---- */
+.nickname-input {
+  flex: 1;
+  height: 56rpx;
+  font-size: 30rpx;
+  color: #1a1a1a;
+}
+
+/* ---- 自我描述 ---- */
+.bio-head {
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+}
+.bio-count {
+  font-size: 24rpx;
+  color: #b0b0b8;
+}
+.bio-input {
+  width: 100%;
+  height: 160rpx;
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  color: #1a1a1a;
+  line-height: 40rpx;
+}
+
+/* ---- 保存按钮（品牌渐变） ---- */
+.save-btn {
+  margin-top: 48rpx;
+  margin-left: 24rpx;
+  margin-right: 24rpx;
+  height: 92rpx;
+  border-radius: 46rpx;
+  background-image: linear-gradient(90deg, #7b5cff 0%, #b750ff 50%, #ff5c9d 100%);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12rpx 32rpx rgba(123, 92, 255, 0.35);
+}
+.save-hover {
+  opacity: 0.85;
+}
+.save-btn-disabled {
+  opacity: 0.5;
+}
+.save-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 4rpx;
+}
+</style>

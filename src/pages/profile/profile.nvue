@@ -5,15 +5,16 @@
         <!-- 顶部渐变区域（随页滚动，状态栏高度由内联 paddingTop 注入） -->
         <view class="hero" :style="{ paddingTop: statusBarHeight + 'px' }">
           <view class="hero-inner">
-            <!-- 默认头像 -->
+            <!-- 头像：已设置则展示图片，否则默认 CSS 渐变人形 -->
             <view class="logo-wrap">
-              <view class="avatar-default">
+              <image v-if="avatarUrl" :src="avatarUrl" class="hero-avatar" mode="aspectFill" />
+              <view v-else class="avatar-default">
                 <view class="avatar-head" />
                 <view class="avatar-body" />
               </view>
             </view>
-            <text class="username">博客单用户</text>
-            <text class="bio">这个人很懒，什么都没留下</text>
+            <text class="username">{{ nickname }}</text>
+            <text class="bio">{{ displayBio(bio) }}</text>
 
             <!-- 数据统计 -->
             <view class="stats">
@@ -84,8 +85,12 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 // 组件（nvue 页面引用同名 nvue 组件，import 不带扩展名）
 import CustomTabBar from '@/components/CustomTabBar'
+import { fetchUserProfile } from '@/api/user'
+import { displayBio } from '@/utils/user-logic'
 
 // 状态栏 / 底部安全区：原 CSS 状态栏变量与安全区占位改为 JS 计算
 const sys = uni.getSystemInfoSync()
@@ -95,7 +100,24 @@ const safeBottom = sys.safeAreaInsets?.bottom || 0
 // 根节点预留底部 tabbar（50px）+ 安全区高度
 const pageStyle = { paddingBottom: safeBottom + 50 + 'px' }
 
+// 用户资料：初值与 mock 默认一致，首帧即最终展示，无闪烁
+const nickname = ref('博客单用户')
+const bio = ref('')
+const avatarUrl = ref<string | null>(null)
+
+// onShow 静默刷新：从设置页保存返回后立即反映修改
+onShow(async () => {
+  const p = await fetchUserProfile()
+  nickname.value = p.nickname
+  bio.value = p.bio
+  avatarUrl.value = p.avatarUrl
+})
+
 function onMenu(title: string) {
+  if (title === '设置') {
+    uni.navigateTo({ url: '/pages/profile/settings' })
+    return
+  }
   uni.showToast({ title: title + '开发中', icon: 'none' })
 }
 </script>
@@ -132,6 +154,11 @@ function onMenu(title: string) {
   flex-direction: column;
   background-image: linear-gradient(135deg, #7b5cff, #ff5c9d);
   box-shadow: 0 12rpx 40rpx rgba(123, 92, 255, 0.4);
+}
+.hero-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
 }
 .avatar-default {
   width: 100%;

@@ -1019,3 +1019,43 @@ describe('骨架屏组件（nvue 资源加载占位）', () => {
     }
   })
 })
+
+describe('settings.vue SCSS 样式块', () => {
+  const style = extractStyle('src/pages/profile/settings.nvue')
+
+  it('可被 dart-sass 无错编译', () => {
+    expect(() => compileScss(style)).not.toThrow()
+  })
+
+  it('保存按钮使用品牌渐变 + 紫投影', () => {
+    const { css } = compileScss(style)
+    expect(css).toContain('.save-btn')
+    expect(css).toContain(
+      'linear-gradient(90deg, #7b5cff 0%, #b750ff 50%, #ff5c9d 100%)'
+    )
+    expect(css).toContain('rgba(123, 92, 255, 0.35)')
+  })
+
+  it('返回按钮箭头使用 45° 旋转绘制（与详情页一致）', () => {
+    const { css } = compileScss(style)
+    expect(css).toContain('.back-arrow')
+    expect(css).toContain('rotate(45deg)')
+  })
+
+  it('默认头像使用品牌渐变底座 + 人形剪影（与个人页一致）', () => {
+    const { css } = compileScss(style)
+    expect(css).toContain('.avatar-default')
+    expect(css).toContain('.avatar-head')
+    expect(css).toContain('.avatar-body')
+    expect(css).toContain(
+      'linear-gradient(160deg, #8f6bff 0%, #b750ff 55%, #ff5c9d 100%)'
+    )
+  })
+
+  it('设置卡片为白底 24rpx 圆角，nvue 全部单元素类', () => {
+    const { css } = compileScss(style)
+    expect(css).toContain('.card')
+    expect(css).toMatch(/\.card\s*\{[^}]*background(-color)?: #ffffff/)
+    expect(css).toContain('border-radius: 24rpx')
+  })
+})
